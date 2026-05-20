@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SPC Operational KPIs Book</title>
+<style>
+:root{
+  --blue:#003b5c;--blue2:#006f98;--blue3:#0b5f78;--orange:#ff7a00;--teal:#22b8b0;
+  --bg:#eef5f8;--card:#ffffff;--txt:#0f172a;--muted:#64748b;--line:#dbe7ee;
+  --ok:#10b981;--no:#94a3b8;--warn:#f59e0b;--red:#ef4444;--purple:#7c3aed;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Segoe UI,Arial,sans-serif;background:linear-gradient(180deg,#eaf4f8 0%,#f7fbfd 100%);color:var(--txt)}
+.page{max-width:1480px;margin:0 auto;padding:28px}
+.hero{
+  background:linear-gradient(135deg,var(--blue),var(--blue2));color:white;border-radius:28px;padding:34px 38px;margin-bottom:24px;
+  position:relative;overflow:hidden;box-shadow:0 16px 38px rgba(0,59,92,.18);min-height:188px
+}
+.hero h1{margin:0;font-size:38px;letter-spacing:.2px;position:relative;z-index:3}.hero p{margin:10px 0 0;color:#dcf7ff;font-size:17px;position:relative;z-index:3}
+.hero .subtitle{max-width:760px;line-height:1.45}
+.hero:before{content:"";position:absolute;right:95px;top:0;width:5px;height:190px;background:rgba(255,255,255,.28);transform:skewX(-18deg)}
+.hero:after{content:"";position:absolute;right:-65px;top:-78px;width:255px;height:255px;background:rgba(255,122,0,.22);border-radius:50%}
+.shipArt{position:absolute;right:40px;bottom:22px;width:360px;height:110px;opacity:.95;z-index:2}
+.shipHull{position:absolute;bottom:0;left:36px;width:285px;height:38px;background:rgba(255,255,255,.18);border:2px solid rgba(255,255,255,.38);border-radius:8px 8px 38px 38px;transform:skewX(-12deg)}
+.shipLine{position:absolute;bottom:18px;left:72px;width:210px;height:4px;background:var(--orange);border-radius:999px}
+.crane{position:absolute;bottom:42px;left:30px;width:210px;height:72px;border-left:5px solid rgba(255,255,255,.42);border-top:5px solid rgba(255,255,255,.42)}
+.crane:after{content:"";position:absolute;right:-45px;top:-5px;width:70px;border-top:5px solid rgba(255,255,255,.42);transform:skewX(-30deg)}
+.containerStack{position:absolute;right:54px;bottom:38px;display:grid;grid-template-columns:repeat(3,42px);gap:6px}
+.cont{height:20px;border-radius:4px;background:rgba(255,122,0,.84);box-shadow:inset 0 0 0 1px rgba(255,255,255,.38)}
+.cont:nth-child(2),.cont:nth-child(5){background:rgba(34,184,176,.88)}.cont:nth-child(3){background:rgba(255,255,255,.28)}
+.tabs{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px}.tab{border:1px solid var(--line);background:white;border-radius:15px;padding:13px 18px;font:inherit;cursor:pointer;font-weight:800;box-shadow:0 5px 14px rgba(0,0,0,.04)}
+.tab.active{background:var(--orange);color:white;border-color:var(--orange)}
+.searchWrap{background:white;border:1px solid var(--line);border-radius:22px;padding:16px;margin-bottom:18px;box-shadow:0 8px 22px rgba(0,0,0,.05);display:flex;gap:14px;align-items:center}
+.searchIcon{width:42px;height:42px;border-radius:14px;background:#e8f7fb;display:flex;align-items:center;justify-content:center;color:var(--blue);font-weight:900}
+input{border:0;outline:0;font:inherit;width:100%;font-size:17px;color:var(--txt)}
+.opsNote{display:grid;grid-template-columns:1.1fr 2fr;gap:16px;margin-bottom:20px}.noteCard{background:white;border:1px solid var(--line);border-radius:22px;padding:20px;box-shadow:0 8px 22px rgba(0,0,0,.05)}
+.noteCard h2{margin:0 0 8px;color:var(--blue);font-size:22px}.noteCard p{margin:0;line-height:1.5;color:var(--muted)}
+.equipmentChips{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}.eqChip{padding:9px 12px;border-radius:999px;font-weight:800;background:#e8f7fb;color:#036985}.eqChip:nth-child(2){background:#fff7e8;color:#a65300}.eqChip:nth-child(3){background:#eff6ff;color:#075985}.eqChip:nth-child(4){background:#f3e8ff;color:#6d28d9}
+.view.hidden{display:none}.categoryBlock{margin-bottom:22px}.categoryHeader{display:flex;align-items:center;gap:13px;margin:24px 0 14px}.categoryHeader h2{margin:0;color:#020617;font-size:26px}.catLine{height:3px;flex:1;background:linear-gradient(90deg,var(--orange),transparent);border-radius:999px}.kpiGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+.kpi{background:white;border:1px solid #d9e7ee;border-radius:24px;padding:22px;box-shadow:0 12px 28px rgba(0,0,0,.065);position:relative;overflow:hidden}.kpi:before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:var(--orange)}
+.kpi.general:before{background:var(--orange)}.kpi.operational:before{background:var(--teal)}.kpi.terminal:before{background:var(--purple)}
+.kpiTop{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.kpi h3{margin:0 0 8px;color:var(--blue);font-size:24px}.tags{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 14px}.tag{display:inline-flex;align-items:center;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:800;background:#e8f7fb;color:#036985}.tag.general{background:#fff7e8;color:#a65300}.tag.operational{background:#e7fff8;color:#08734f}.tag.terminal{background:#f3e8ff;color:#6d28d9}.tag.parked{background:#fff4d8;color:#9a5a00}
+.iconBadge{min-width:48px;height:48px;border-radius:16px;background:linear-gradient(135deg,#e8f7fb,#fff7e8);display:flex;align-items:center;justify-content:center;font-size:26px}
+.label{font-weight:900;color:#0f172a;margin-top:14px;margin-bottom:6px;display:flex;align-items:center;gap:8px}.label span{color:var(--orange)}
+.kpi p{line-height:1.48}.definition{font-size:16px;margin:12px 0;color:#102033}.purpose{color:var(--muted);margin:8px 0 0}.formula{background:#f8fafc;border-left:5px solid var(--orange);padding:12px 14px;border-radius:14px;margin:10px 0 12px;font-weight:800;line-height:1.45}.formula small{display:block;color:var(--muted);font-weight:700;margin-top:5px}.rules{margin:8px 0 0;padding-left:20px;color:#243447}.rules li{margin:6px 0;line-height:1.35}.source{margin-top:12px;color:var(--muted);font-weight:700}.variantBox{border:1px solid var(--line);background:#fbfdff;border-radius:16px;padding:12px 14px;margin:10px 0}.variantBox b{color:var(--blue)}
+details{margin-top:10px}summary{cursor:pointer;font-weight:900;color:var(--blue);padding:7px 0}.matrixWrap,.targetWrap{background:white;border-radius:24px;padding:20px;box-shadow:0 12px 28px rgba(0,0,0,.06);border:1px solid var(--line);overflow:auto}table{width:100%;border-collapse:separate;border-spacing:0 8px;min-width:900px}th{text-align:left;color:var(--muted);font-size:13px;padding:8px;white-space:nowrap}td{background:#fff;padding:12px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);vertical-align:top}td:first-child{border-left:1px solid var(--line);border-radius:13px 0 0 13px;font-weight:800;color:var(--blue)}td:last-child{border-right:1px solid var(--line);border-radius:0 13px 13px 0}.yes{color:var(--ok);font-weight:900}.no{color:#94a3b8;font-weight:700}.target{font-weight:900;color:var(--blue)}
+.terminalCards{
+display:grid;
+grid-template-columns:1fr;
+gap:16px;
+width:100%;
+}
+
+.terminalCard{
+width:100%;
+min-width:0;
+overflow:hidden;
+border:1px solid var(--line);
+border-radius:22px;
+padding:18px;
+background:#fff;
+box-shadow:0 8px 22px rgba(0,0,0,.05);
+}
+
+.terminalCard table{
+width:100%;
+table-layout:fixed;
+}
+
+.terminalCard th,
+.terminalCard td{
+padding:10px 8px;
+font-size:13px;
+white-space:normal;
+word-break:break-word;
+overflow-wrap:anywhere;
+}
+
+.terminalCard th:nth-child(1),
+.terminalCard td:nth-child(1){
+width:60%;
+}
+
+.terminalCard th:nth-child(2),
+.terminalCard td:nth-child(2){
+width:20%;
+text-align:center;
+}
+
+.terminalCard th:nth-child(3),
+.terminalCard td:nth-child(3){
+width:20%;
+text-align:center;
+}
+
+.terminalCard h2{
+margin:0 0 6px;
+color:var(--blue);
+}
+
+.pill{
+float:right;
+background:#edf7ff;
+color:#006088;
+border-radius:999px;
+padding:6px 10px;
+font-size:12px;
+font-weight:900;
+}
+
+.muted{
+color:var(--muted);
+}
+
+.empty{
+padding:34px;
+text-align:center;
+color:var(--muted);
+background:white;
+border-radius:22px;
+border:1px dashed var(--line);
+}
+.parkedCell{
+color:#dc2626 !important;
+font-weight:900 !important;
+}
+.pmphGrid{
+display:grid;
+grid-template-columns:1fr;
+gap:18px;
+width:100%;
+}
+
+.pmphCard{
+background:white;
+border-radius:22px;
+padding:18px;
+border:1px solid var(--line);
+box-shadow:0 8px 22px rgba(0,0,0,.05);
+min-width:0;
+overflow:hidden;
+}
+
+.pmphHeader{
+display:flex;
+justify-content:space-between;
+align-items:center;
+gap:10px;
+margin-bottom:14px;
+}
+
+.pmphHeader h2{
+margin:0;
+color:var(--blue);
+}
+
+.pmphWeight{
+padding:6px 10px;
+border-radius:999px;
+font-weight:900;
+font-size:11px;
+white-space:nowrap;
+display:inline-flex;
+align-items:center;
+justify-content:center;
+gap:4px;
+line-height:1;
+flex-shrink:0;
+}
+
+.pmphCard table{
+width:100%;
+table-layout:fixed;
+border-collapse:collapse;
+}
+
+.pmphCard th,
+.pmphCard td{
+padding:8px 6px;
+font-size:12px;
+border-bottom:1px solid #edf2f7;
+text-align:center;
+white-space:nowrap;
+overflow:hidden;
+text-overflow:ellipsis;
+}
+
+.pmphCard th:nth-child(1),
+.pmphCard td:nth-child(1){
+width:22%;
+}
+
+.pmphCard th:nth-child(2),
+.pmphCard td:nth-child(2){
+width:22%;
+}
+
+.pmphCard th:nth-child(3),
+.pmphCard td:nth-child(3){
+width:22%;
+}
+
+.pmphCard th:nth-child(4),
+.pmphCard td:nth-child(4){
+width:34%;
+}
+
+.pmphCard .target{
+font-weight:900;
+color:var(--blue);
+}
+.tag.general{
+background:#fff4d8;
+color:#9a5a00;
+}
+
+.tag.operational{
+background:#d1fae5;
+color:#047857;
+}
+
+.tag.rtg{
+background:#e0f2fe;
+color:#036985;
+}
+
+.tag.straddle{
+background:#fff1d6;
+color:#a65300;
+}
+
+.tag.armg{
+background:#e8f7ff;
+color:#005f8f;
+}
+
+.tag.ehrs{
+background:#f3e8ff;
+color:#6d28d9;
+}
+@media(max-width:1050px){.kpiGrid,.terminalCards,.opsNote{grid-template-columns:1fr}.shipArt{opacity:.25;right:5px}.hero h1{font-size:28px}.page{padding:16px}table{min-width:760px}}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="hero">
+    <h1>SPC Operational KPIs</h1>
+    <p class="subtitle">A structured KPI reference for vessel planning performance, terminal applicability, and operational targets by terminal and equipment operating model.</p>
+    <div class="shipArt" aria-hidden="true"><div class="crane"></div><div class="shipHull"></div><div class="shipLine"></div><div class="containerStack"><div class="cont"></div><div class="cont"></div><div class="cont"></div><div class="cont"></div><div class="cont"></div><div class="cont"></div></div></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showView('definitions',this)">Terminals KPI Definitions</button>
+    <button class="tab" onclick="showView('applicability',this)">Applicability per Terminal</button>
+    <button class="tab" onclick="showView('targets',this)">Targets per Terminal</button>
+    <button class="tab" onclick="showView('pmphTargets',this)">Global PMPH Targets</button>
+  </div>
+
+  <div class="searchWrap">
+    <div class="searchIcon">⌕</div>
+    <input id="search" placeholder="Search KPI, terminal, equipment, formula, rule..." oninput="renderAll()" />
+  </div>
+
+  <div class="opsNote">
+    <div class="noteCard">
+      <h2>KPI Definition Structure</h2>
+      <p>The definitions are split into three groups: <b>General KPIs</b>, <b>Operational Operandi KPIs</b>, and <b>Terminal Specific KPIs</b>.</p>
+    </div>
+    <div class="noteCard">
+      <h2>Operational Operandi</h2>
+      <p>Operational Operandi defines the terminal operating model/equipment setup used to apply KPI logic and rules.</p>
+      <div class="equipmentChips"><span class="eqChip">RTG</span><span class="eqChip">Straddle Carrier</span><span class="eqChip">Automated / ARMG</span><span class="eqChip">EH/RS</span></div>
+    </div>
+  </div>
+
+  <section id="definitions" class="view"></section>
+  <section id="applicability" class="view hidden"></section>
+  <section id="targets" class="view hidden"></section>
+  <section id="pmphTargets" class="view hidden"></section>
+</div>
+<script>
+const terminals = [
+ {code:'SEGOT',equipment:'Straddle Carrier',source:'Terminal Agreement 2026'}, {code:'DKAAR',equipment:'Straddle Carrier',source:'Terminal Agreement 2026'},
+ {code:'MAMED',equipment:'Automated / ARMG',source:'Terminal Agreement 2026'}, {code:'ITVAD',equipment:'Automated / ARMG',source:'Terminal Agreement 2026'},
+ {code:'MAPTM',equipment:'RTG',source:'Terminal Agreement 2026'}, {code:'OMSLL',equipment:'RTG',source:'Terminal Agreement 2026'}, {code:'EGPSD',equipment:'RTG',source:'Terminal Agreement 2026'},
+ {code:'HRRJK',equipment:'Pending confirmation',source:'Terminal Agreement 2026'}, {code:'NGONN',equipment:'Pending confirmation',source:'Terminal Agreement 2026'}, {code:'NGAPP',equipment:'RTG',source:'Terminal Agreement 2026'}, {code:'BHBAH',equipment:'RTG',source:'Terminal Agreement 2026'},
+ {code:'JOAQJ',equipment:'EH/RS',source:'Terminal Agreement 2026'}, {code:'LRMLW',equipment:'EH/RS',source:'Terminal Agreement 2026'}
+];
+
+const kpis = [
+ {name:'Planning Turnaround Time',group:'General KPIs',card:'general',applicability:['General'],icon:'⏱️',
+  definition:'Measures how early the vessel plan is finalized and shared with the terminal compared to ETA.',
+  purpose:'Ensure vessel plans are delivered within the agreed timeline to support smooth terminal operations.',
+  formula:'Planning Turnaround Time (h) = (Agreed Delivery Status − Vessel ETA) × 24',
+  extraFormula:'Planning Turnaround Time % = Vessels On Time / Total Vessels × 100',
+  variants:[
+    ['OMSLL / EGPSD','Planning Turnaround Time (h) = (Sign Off Time − Vessel ETA) × 24'],
+    ['LRMLW / NGONN','Planning Turnaround Time (h) = (Call Info − Vessel ETA) × 24'],
+    ['All other terminals','Planning Turnaround Time (h) = (Approved Plan Time / 1st Approval − Vessel ETA) × 24']
+  ],
+  rules:['The % is calculated on weekly, monthly or selected reporting period.'],source:'Emails'},
+ {name:'Stowage Quality',group:'General KPIs',card:'general',applicability:['General'],icon:'📦',
+  definition:'Measures compliance of the vessel stowage plan with defined stowage rules and requirements from Central Planners.',
+  purpose:'Ensure the plan complies with central planner requirements for safe and efficient vessel operations.',
+  formula:'Stowage Quality = (Total Containers Loaded − Σ Changes by C/O or CP) / Total Containers Loaded × 100',
+  rules:['Changes are counted until first approval is provided.'],source:'Approval Emails'},
+ {name:'Crane Intensity (CI) Adherence',group:'General KPIs',card:'general',applicability:['General'],icon:'🏗️',
+  definition:'Measures how closely the planned crane intensity aligns with the Central Planner / Terminal given CI.',
+  purpose:'Align planned CI with agreed operational targets while considering crane availability.',
+  formula:'CI Adherence = (Planned CI / Given CI) × 100',
+  rules:['Crane availability is considered in the Given CI for some terminals.'],source:'Emails & TOS'},
+ {name:'Port Hours Saved',group:'General KPIs',card:'general',applicability:['General'],icon:'⚓',
+  definition:'Measures the reduction in vessel port stay achieved through planning decisions.',
+  purpose:'Support shorter port stay through optimized planning, long crane optimization, cargo shifting, and CI increase.',
+  formula:'Port Hours Saved % = (Target Port Stay Hours − Planned Port Stay Hours) / Target Port Stay Hours × 100',
+  rules:['The Planned Port Hours is the Operations Hours + the Terminal Determined Idle Time.'],source:'TOS & agreed global Port Hours targets per call'},
+
+ {name:'Rehandles',group:'Operational Operandi KPIs',card:'operational',applicability:['Straddle Carrier','RTG','Automated / ARMG','EH/RS'],icon:'🔁',
+  definition:'Measures the number of additional container moves performed in the yard due to yard picking decisions, where containers must be moved temporarily to access another container for loading.',
+  purpose:'Minimize extra non-value-added movements and yard workload.',
+  formula:'Rehandles % = (Number of Rehandled Containers / Total Containers Loaded from the Yard) × 100',
+  rules:['Heap areas are excluded.'],source:'TOS Vessel Work Instructions'},
+ {name:'Twin Planning',group:'Operational Operandi KPIs',card:'operational',applicability:['Straddle Carrier','RTG','Automated / ARMG','EH/RS'],icon:'🔗',
+  definition:'Measures how often twin containers are planned to be handled together, according to the terminal’s equipment and operational setup.',
+  purpose:'Increase handling efficiency by planning twin lifts whenever operationally possible.',
+  formula:'Twin Planning = (Number of Twins Planned / Number of Twin Opportunities) × 100',
+  rules:['Heap areas are excluded.'],source:'TOS Vessel Work Instructions'},
+ {name:'Yard Clashes',group:'Operational Operandi KPIs',card:'operational',applicability:['Straddle Carrier','RTG','Automated / ARMG','EH/RS'],icon:'⚠️',
+  definition:'Measures operational conflicts created when yard equipment, yard blocks, yard bays, rows, loading points or transfer zones are planned too close in time, distance, or workload capacity during vessel operations.',
+  purpose:'Reduce yard operational conflicts by keeping enough time and distance separation between simultaneous crane demands and by respecting equipment workload limitations.',
+  formula:'Yard Clashes % = (Number of Yard Clashes / Total Load Moves) × 100',
+  variants:[
+    ['RTG Yard clash','Block rule: if the block feeds 1+ cranes and the selected yard bays are separated by less than the terminal-defined 20ft yard bay Distance / Yard Bay rule: If the same yard bay feeds 2+ cranes, with a time difference less then 15 minutes'],
+    ['Automated (ARMG) clash','If The plan does not respect operational capacity limits defined for ARMGs and transfer zones(ARMG moves/hour).'],
+    ['Straddle Carrier Clash','If successive yard rows are simultaneously feeding 1+ crane within a 15-minute operational window.'],
+    ['EH/RS Clash','If successive yard Lanes are simultaneously feeding 1+ crane within a 15-minutes operational window Whitout respecting the terminal-defined Safety Rows.']
+  ],
+  rules:['Heap areas are excluded.'],source:'TOS Vessel Work Instructions'},
+ {name:'Loading Points',group:'Operational Operandi KPIs',card:'operational',applicability:['Straddle Carrier','RTG','EH/RS'],icon:'📍',
+  definition:'Measures the average number of yard loading points used to feed each working quay crane during one operational hour.',
+  purpose:'Ensure balanced yard utilization and continuous feeding for quay crane operations.',
+  formula:'Loading Points = Average number of loading points feeding a crane per hour',
+  variants:[['Straddle Carrier','Loading points are generally considered as rows.'],['RTG / EH-RS','Loading points can be yard blocks, sections, lanes, or terminal-defined feeding areas.']],
+  rules:['Heap areas are excluded.'],source:'TOS Vessel Work Instructions'},
+ {name:'Alternation',group:'Operational Operandi KPIs',card:'operational',applicability:['Straddle Carrier','RTG','Automated / ARMG'],icon:'🔀',
+  definition:'Measures how consistently loading operations alternate between different yard blocks or loading points feeding the same vessel bay.',
+  purpose:'Ensure balanced yard picking and continuous crane feeding by alternating between loading points instead of picking repeatedly from the same area.',
+  formula:'Alternation % = Alternated Loading Points Count / Alternation Possibilities × 100',
+  rules:['Heap areas are excluded.'],source:'TOS Vessel Work Instructions'},
+{name:'P.O.W Operational Overlap ',group:'Operational Operandi KPIs',card:'operational',applicability:['Straddle Carrier','RTG','Automated / ARMG','EH/RS'],icon:'🛤️',
+  definition:'Measures the percentage of yard operational areas that are simultaneously worked by more than one crane (POW) during vessel operations.',
+  purpose:'To monitor operational splitting within yard handling areas in order to reduce crane interference, minimize yard congestion, and maintain stable and efficient yard feeding operations.',
+  formula:'P.O.W Operational Overlap % = (Number of yard operational areas Worked by More than 1 POW ÷ yard operational areas) × 100',
+  extraFormula:'Split Intensity = Average POW Count per Split of yard operational areas',
+  variants:[
+    ['RTG Operational Area','Yard Section (Bay), POW Per Section'],
+    ['Automated (ARMG) Operational Area','Yard Stack, POW Per Stack'],
+    ['Straddle Carrier Operational Area','Yard Row, POW Per Row'],
+    ['EH/RS Operational Area','Yard Lane, POW Per Lane']
+  ],
+  rules:['Heap areas are excluded.'],source:'TOS Vessel Work Instructions'},
+{name:'Yard Picking Sequence Adherence',group:'Operational Operandi KPIs',card:'operational',applicability:['Straddle Carrier','RTG','EH/RS'],icon:'✅',
+  definition:'Measures how closely the planned container picking sequence follows the optimal yard order defined by the terminal yard layout and handling rules.',
+  purpose:'Ensure containers are picked in a logical and continuous yard sequence, reducing unnecessary equipment movements and supporting smooth yard operations.',
+  formula:'Yard Picking Sequence Adherence % = Containers Picked Following Correct Yard Sequence / Total Containers Picked from Yard × 100',
+  rules:['Heap areas are excluded.'],source:'TOS Vessel Work Instructions'},
+
+{name:'Dual Cycling',group:'Operational Operandi KPIs',card:'operational',applicability:['Straddle Carrier','RTG','Automated / ARMG','EH/RS'],status:'Parked',icon:'🔄',
+  definition:'Measures the percentage of dual cycling opportunities that are planned compared to the total dual cycling opportunities available from vessel stowage.',
+  purpose:'Maximize quay crane efficiency by reducing empty crane movements and improving operational flow.',
+  formula:'Dual Cycling % = Planned Dual Cycling Moves / Available Dual Cycling Opportunities × 100',
+  rules:['Opportunities depend on terminal configuration, equipment type, and restrictions.','Parked for several terminals.'],source:'TOS Vessel Work Instructions'},
+{name:'Tandem Planning',group:'Operational Operandi KPIs',card:'operational',applicability:['Straddle Carrier','RTG','Automated / ARMG','EH/RS'],status:'Parked',icon:'🔄',
+  definition:'Measures the percentage of tandem opportunities that are planned compared to the total tandem opportunities available according to terminal operational specifications and equipment restrictions.',
+  purpose:'Maximize operational efficiency by increasing simultaneous container handling, reducing crane cycle times, and improving quay crane productivity.',
+  formula:'Tandem Planning % = Planned Tandem Moves / Tandem Opportunities × 100',
+  rules:['Opportunities depend on terminal configuration, equipment type, and restrictions.','Parked for several terminals.'],source:'TOS Vessel Work Instructions'},
+
+  {name:'Yard Mirroring',group:'Terminal Specific KPIs',card:'terminal',applicability:['Straddle Carrier'],icon:'🪞',
+  definition:'Measures how consistently each vessel bay is fed from the parallel yard blocks to minimize traveling distance.',
+  purpose:'Ensure stable and predictable yard feeding per crane, reduce unnecessary yard movement, and optimize yard flow.',
+  formula:'Yard Mirroring KPI % = Average of Block Mirroring %',
+  extraFormula: 'Block Mirroring % = Mirrored Moves per Yard Block / Total Moves per Block',
+  rules:['Calculated across blocks for every POD, Length, and Freight Kind.','OOGs, IMOs, and Reefers are excluded.','Only Straddle Carrier yard is considered.'],source:'TOS Vessel Work Instructions'},
+ {name:'Average Traveling Distance',group:'Terminal Specific KPIs',card:'terminal',applicability:['Straddle Carrier'],icon:'🛣️',
+  definition:'Measures the average distance travelled by yard equipment to move containers from their yard position to the vessel during loading.',
+  purpose:'Ensure containers are picked from the nearest possible yard positions to reduce equipment travel, yard congestion, and handling time.',
+  formula:'Average Traveling Distance = Average Traveling Distance per Container Picked from Yard by Straddle Carrier',
+  rules:['Heap areas and OOGs are excluded.','Only Straddle Carrier yard is considered.'],source:'TOS Vessel Work Instructions'},
+
+ {name:'Stacks Evacuation',group:'Terminal Specific KPIs',card:'terminal',applicability:['Straddle Carrier'],icon:'➡️',
+  definition:'Measures the extent to which a yard stack is fully evacuated continuously once loading from that stack has started.',
+  purpose:'Ensure smooth and continuous yard operations by Liberating Ground Slots to create flexibility in the Yard .',
+  formula:'Stacks Evacuation % = Stacks Evacuated / Total Stacks × 100',
+  rules:['The Span of Time for Stack Evacuation is 15 minutes.','Units in heap areas are excluded.'],source:'TOS Vessel Work Instructions'},
+
+  {name:'Rows Evacuation',group:'Terminal Specific KPIs',card:'terminal',applicability:['Straddle Carrier'],icon:'➡️',
+  definition:'Measures the extent to which a yard row is fully evacuated once loading from that row has started, without interruption across hours.',
+  purpose:'Ensure smooth and continuous yard operations by completing row evacuation before moving to another row and preparing the yard for discharge operations.',
+  formula:'Rows Evacutaion %: Scenario 1 = Containers evacuated at first continuous entry / Total containers in row × 100',
+  extraFormula:'Rows Evacutaion %: Scenario 2 = Containers evacuated during largest continuous entry / Total containers in row × 100',
+  rules:['SEGOT and DKAAR use Scenario 1 with 1 hour Span of Time .','Units in heap areas are excluded.'],source:'TOS Vessel Work Instructions'},
+
+
+ {name:'RTG Moves Before Gantry',group:'Terminal Specific KPIs',card:'terminal',applicability:['RTG'],icon:'🚜',
+  definition:'Measures the number of container moves performed by an RTG in the same yard bay/section before moving to another bay/section.',
+  purpose:'Ensure efficient RTG operations by maximizing moves completed in one bay before relocating.',
+  formula:'RTG Moves Before Gantry = Average number of container moves performed by RTG in one yard bay before gantry movement',
+  extraFormula:'RTG Flow Efficiency %: RTG Moves Before Gantry / Average available moves per yard bay × 100',
+  rules:['Twins are counted according to terminal rules.','Heap areas are excluded.','Applies to RTG-operated yards.'],source:'TOS Vessel Work Instructions'},
+
+  {name:'RTG One-Way Travel Adherence',group:'Terminal Specific KPIs',card:'terminal',applicability:['RTG'], status:'Parked', icon:'🚜',
+  definition:'Measures the number of container moves performed by an RTG in the same yard bay/section before moving to another bay/section.',
+  purpose:'Measures how consistently RTG loading moves follow one continuous yard-bay direction within the same RTG working area, either from the smallest yard bay to the biggest yard bay or from the biggest yard bay to the smallest yard bay.',
+  formula:'RTG One-Way Travel Adherence % =(Number of moves following the selected one-way yard bay direction / Total RTG yard moves evaluated) × 100',
+  rules:['Heap areas are excluded.','Applies to RTG-operated yards.'],source:'TOS Vessel Work Instructions'},
+ {name:'Twin Yard Flow Adherence',group:'Terminal Specific KPIs',card:'terminal',applicability:['RTG'],icon:'🧭',
+  definition:'Measures how consistently twin containers are planned to be picked from the same yard block or aligned yard positions (Yard Flow), allowing them to follow the intended Truck yard Flow.',
+  purpose:'Ensure that twin containers can be handled together while respecting the Truck yard flow to avoid operational interruptions & increase efficiency.',
+  formula:'Twin Yard Flow Adherence = (Total Twins Planned − Twins Planned Not Following Yard Flow) / Total Twins Planned × 100',
+  rules:['Heap areas are excluded.'],source:'TOS Vessel Work Instructions'},
+ 
+];
+
+const targets = {
+  SEGOT: [
+    ['Planning Turnaround Time','4h','10%'],
+    ['Stowage Quality','90%','5%'],
+    ['Rehandles','1%','10%'],
+    ['Twin Planning','80%','10%'],
+    ['Yard Clashes','1%','5%'],
+    ['Loading Points','4.5','15%'],
+    ['Alternation','80%','5%'],
+    ['Average Traveling Distance','350','15%'],
+    ['Stacks Evacuation','80%','15%'],
+    ['Yard Mirroring','75%','10%'],
+    ['Rows Evacuation','80%','0%'],
+    ['Dual Cycling','50%','0%']
+  ],
+  DKAAR:[
+    ['Planning Turnaround Time','6h','0%'],
+    ['Stowage Quality','90%','0%'],
+    ['Rehandles','1%','0%'],
+    ['Twin Planning','80%','0%'],
+    ['Yard Clashes','1%','0%'],
+    ['Loading Points','4.5','0%'],
+    ['Alternation','80%','0%'],
+    ['Average Traveling Distance','400','0%'],
+    ['Stacks Evacuation','80%','0%'],
+    ['Yard Mirroring','75%','0%'],
+    ['Rows Evacuation','80%','0%'],
+    ['Dual Cycling','50%','0%']
+  ],
+ HRRJK: [
+  ['Planning Turnaround Time','4h','0%'],
+  ['Stowage Quality','90%','0%'],
+  ['Crane Intensity (CI) Adherence','80%','0%'],
+  ['Port Hours Saved','5%','0%'],
+  ['Rehandles','2%','0%'],
+  ['Twin Planning','90%','0%'],
+  ['Yard Clashes','2%','0%'],
+  ['Loading Points','2','0%'],
+  ['Alternation','80%','0%'],
+  ['RTG Moves Before Gantry','10','0%']
+  ],
+
+   ITVAD: [
+  ['Planning Turnaround Time','4h','20%'],
+  ['Stowage Quality','90%','15%'],
+  ['Rehandles','5%','10%'],
+  ['Yard Clashes','5%','20%'],
+  ['Alternation','80%','20%'],
+  ['P.O.W Operational Overlap','10%','10%'],
+   ['Dual Cycling','50%','5%']
+  ],
+
+EGPSD: [
+  ['Planning Turnaround Time','6h','10%'],
+  ['Rehandles','2%','10%'],
+  ['Twin Planning','90%','5%'],
+  ['Yard Clashes','2%','10%'],
+  ['Loading Points','4','20%'],
+  ['Alternation','90%','10%'],
+  ['Dual Cycling','90%','Parked'],
+  ['RTG Moves Before Gantry','5','20%'],
+  ['Twin Yard Flow Adherence','95%','15%']
+],
+OMSLL: [
+    ['Planning Turnaround Time','6h','10%'],
+    ['Stowage Quality','90%','0%'],
+    ['Crane Intensity (CI) Adherence','90%','0%'],
+    ['Port Hours Saved','10%','0%'],
+    ['Rehandles','2%','15%'],
+    ['Twin Planning','90%','10%'],
+    ['Yard Clashes','5%','10%'],
+    ['RTG Moves Before Gantry','5','25%'],
+    ['Loading Points','3.5','30%'],
+    ['Dual Cycling','80%','Parked']
+  ],
+
+  JOAQJ: [
+  ['Planning Turnaround Time','4h','20%'],
+  ['Stowage Quality','90%','10%'],
+  ['Crane Intensity (CI) Adherence','90%','0%'],
+  ['Port Hours Saved','5%','5%'],
+  ['Rehandles','1%','15%'],
+  ['Twin Planning','90%','10%'],
+  ['Loading Points','2','20%'],
+  ['P.O.W Operational Overlap','5%','10%'],
+  ['Yard Picking Sequence Adherence','90%','10%'],
+  ['Dual Cycling','50%','0%']
+],
+BHBAH: [
+    ['Planning Turnaround Time','6h','10%'],
+    ['Stowage Quality','90%','0%'],
+    ['Crane Intensity (CI) Adherence','95%','5%'],
+    ['Port Hours Saved','5%','5%'],
+    ['Rehandles','2%','10%'],
+    ['Twin Planning','90%','10%'],
+    ['Yard Clashes','2%','15%'],
+    ['Loading Points','2','15%'],
+    ['Alternation','80%','20%'],
+    ['RTG Moves Before Gantry','6','10%']
+  ],
+
+  MAMED: [
+  ['Planning Turnaround Time h','4h','10%'],
+  ['Stowage Quality','90%','0%'],
+  ['Crane Intensity (CI) Adherence','98%','10%'],
+  ['Port Hours Saved','15%','20%'],
+  ['Rehandles','3%','10%'],
+  ['Twin Planning','40%','10%'],
+  ['Yard Clashes','5%','10%'],
+  ['Alternation','80%','20%'],
+  ['P.O.W Operational Overlap','5%','10%'],
+  ['Tandem Planning','5%','Parked']
+],
+MAPTM: [
+  ['Planning Turnaround Time','3h','20%'],
+  ['Stowage Quality','90%','0%'],
+  ['Crane Intensity (CI) Adherence','95%','0%'],
+  ['Port Hours Saved','20%','5%'],
+  ['Rehandles','2%','15%'],
+  ['Twin Planning','90%','15%'],
+  ['Yard Clashes','10%','10%'],
+  ['Loading Points','3.7','25%'],
+  ['Dual Cycling','50%','Parked'],
+  ['RTG Moves Before Gantry','7','10%']
+],
+  NGAPP: [
+    ['Planning Turnaround Time','2h','10%'],
+    ['Stowage Quality','90%','5%'],
+    ['Crane Intensity (CI) Adherence','95%','5%'],
+    ['Port Hours Saved','10%','15%'],
+    ['Rehandles','2%','10%'],
+    ['Twin Planning','80%','15%'],
+    ['Yard Clashes','2%','10%'],
+    ['Loading Points','3','15%'],
+    ['Dual Cycling','15%','0%'],
+    ['RTG Moves Before Gantry','8','15%'],
+    ['RTG One-Way Travel Adherence','70%','Parked']
+  ],
+
+NGONN: [
+    ['Planning Turnaround Time','6h','0%'],
+    ['Crane Intensity (CI) Adherence','80%','0%'],
+    ['Port Hours Saved','5%','0%'],
+    ['Rehandles','1%','0%'],
+    ['Twin Planning','60%','0%'],
+    ['Yard Clashes','1%','0%'],
+    ['Loading Points','2','0%'],
+    ['RTG Moves Before Gantry','4','0%']
+  ],
+
+LRMLW: [
+    ['Planning Turnaround Time','2h','50%'],
+    ['Port Hours Saved','10%','50%'],
+  ],
+};
+const pmphTargets = {
+
+MAMED:{
+operandi:'Automated / ARMG',
+target:'15%',
+rows:[
+['1','500','I','39.76'],
+['501','1000','II','59.37'],
+['1001','1500','III','82.61'],
+['1501','2000','IV','99.03'],
+['2001','2500','V','112.46'],
+['2501','3000','VI','123.72'],
+['3001','3500','VII','142.02'],
+['3501','4000','VIII','142.02'],
+['4001','4500','IX','160'],
+['4501','5000','X','160'],
+['5001','6000','XI','183.24'],
+['6001','7000','XII','183.24'],
+['7001','8000','XIII','229.2'],
+['8001','9000','XIV','229.2'],
+['9001','11000','XV','632.41']
+]
+},
+
+MAPTM:{
+operandi:'RTG',
+target:'20%',
+rows:[
+['1','500','I','49.92'],
+['501','1000','II','72.78'],
+['1001','1500','III','93.42'],
+['1501','2000','IV','110.77'],
+['2001','2500','V','127.88'],
+['2501','3000','VI','146.97'],
+['3001','3500','VII','158.86'],
+['3501','4000','VIII','158.86'],
+['4001','4500','IX','172.93'],
+['4501','5000','X','172.93'],
+['5001','6000','XI','176.12'],
+['6001','7000','XII','176.12'],
+['7001','8000','XIII','176.12'],
+['8001','9000','XIV','176.12'],
+['9001','11000','XV','176.12']
+]
+},
+
+OMSLL:{
+operandi:'RTG',
+target:'10%',
+rows:[
+['1','500','I','66.67'],
+['501','1000','II','89.29'],
+['1001','1500','III','109.49'],
+['1501','2000','IV','125'],
+['2001','2500','V','147.06'],
+['2501','3000','VI','157.89'],
+['3001','3500','VII','159.09'],
+['3501','4000','VIII','166.67'],
+['4001','4500','IX','180'],
+['4501','5000','X','192.31'],
+['5001','6000','XI','200'],
+['6001','7000','XII','225.81'],
+['7001','8000','XIII','242.42'],
+['8001','9000','XIV','250'],
+['9001','11000','XV','261.9']
+]
+},
+
+BHBAH:{
+operandi:'RTG',
+target:'5%',
+rows:[
+['1','500','I','47.58'],
+['501','1000','II','61.87'],
+['1001','1500','III','84.40'],
+['1501','2000','IV','97.74'],
+['2001','2500','V','107.64'],
+['2501','3000','VI','118.91'],
+['3001','3500','VII','118.91'],
+['3501','4000','VIII','118.91'],
+['4001','4500','IX','118.91'],
+['4501','5000','X','118.91'],
+['5001','6000','XI','118.91'],
+['6001','7000','XII','118.91'],
+['7001','8000','XIII','118.91'],
+['8001','9000','XIV','118.91'],
+['9001','11000','XV','118.91']
+]
+},
+
+JOAQJ:{
+target:'5%',
+rows:[
+['1','500','I','41.74'],
+['501','1000','II','55.77'],
+['1001','1500','III','63.47'],
+['1501','2000','IV','69.75'],
+['2001','2500','V','70.54'],
+['2501','3000','VI','74.00'],
+['3001','3500','VII','77.59'],
+['3501','4000','VIII','77.59'],
+['4001','4500','IX','77.59'],
+['4501','5000','X','77.59'],
+['5001','6000','XI','77.59'],
+['6001','7000','XII','77.59'],
+['7001','8000','XIII','77.59'],
+['8001','9000','XIV','77.59'],
+['9001','11000','XV','77.59']
+]
+},
+
+ITVAD:{
+operandi:'Automated / ARMG',
+target:'5%',
+rows:[
+['1','500','I','33.79'],
+['501','1000','II','53.36'],
+['1001','1500','III','60.58'],
+['1501','2000','IV','65.74'],
+['2001','2500','V','67.98'],
+['2501','3000','VI','70.44'],
+['3001','3500','VII','74.14'],
+['3501','4000','VIII','74.14'],
+['4001','4500','IX','74.14'],
+['4501','5000','X','74.14'],
+['5001','6000','XI','74.14'],
+['6001','7000','XII','74.14'],
+['7001','8000','XIII','74.14'],
+['8001','9000','XIV','74.14'],
+['9001','11000','XV','74.14']
+]
+},
+
+DKAAR:{
+operandi:'Straddle Carrier',
+target:'5%',
+rows:[
+['1','500','I','22.85'],
+['501','1000','II','47.38'],
+['1001','1500','III','63.73'],
+['1501','2000','IV','77.98'],
+['2001','2500','V','79.63'],
+['2501','3000','VI','80.39'],
+['3001','3500','VII','83.50'],
+['3501','4000','VIII','83.50'],
+['4001','4500','IX','99.93'],
+['4501','5000','X','99.93'],
+['5001','6000','XI','99.93'],
+['6001','7000','XII','99.93'],
+['7001','8000','XIII','99.93'],
+['8001','9000','XIV','99.93'],
+['9001','11000','XV','99.93']
+]
+},
+
+SEGOT:{
+operandi:'Straddle Carrier',
+target:'5%',
+rows:[
+['1','500','I','20.76'],
+['501','1000','II','32.31'],
+['1001','1500','III','48.27'],
+['1501','2000','IV','54.91'],
+['2001','2500','V','71.40'],
+['2501','3000','VI','77.22'],
+['3001','3500','VII','83.79'],
+['3501','4000','VIII','83.79'],
+['4001','4500','IX','84.43'],
+['4501','5000','X','84.43'],
+['5001','6000','XI','84.43'],
+['6001','7000','XII','84.43'],
+['7001','8000','XIII','84.43'],
+['8001','9000','XIV','84.43'],
+['9001','11000','XV','84.43']
+]
+},
+
+HRRJK:{
+operandi:'RTG',
+target:'0%',
+rows:[
+['1','500','I','21.80'],
+['501','1000','II','21.80'],
+['1001','1500','III','21.80'],
+['1501','2000','IV','21.80'],
+['2001','2500','V','21.80'],
+['2501','3000','VI','21.80'],
+['3001','3500','VII','55.72'],
+['3501','4000','VIII','55.72'],
+['4001','4500','IX','55.72'],
+['4501','5000','X','55.72'],
+['5001','6000','XI','55.72'],
+['6001','7000','XII','55.72'],
+['7001','8000','XIII','55.72'],
+['8001','9000','XIV','55.72'],
+['9001','11000','XV','55.72']
+]
+},
+
+NGAPP:{
+operandi:'RTG',
+target:'10%',
+rows:[
+['1','500','I','18.37'],
+['501','1000','II','22.80'],
+['1001','1500','III','25.60'],
+['1501','2000','IV','27.69'],
+['2001','2500','V','29.30'],
+['2501','3000','VI','35.41'],
+['3001','3500','VII','35.41'],
+['3501','4000','VIII','35.41'],
+['4001','4500','IX','35.41'],
+['4501','5000','X','35.41'],
+['5001','6000','XI','35.41'],
+['6001','7000','XII','35.41'],
+['7001','8000','XIII','35.41'],
+['8001','9000','XIV','35.41'],
+['9001','11000','XV','35.41']
+]
+},
+
+NGONN:{
+operandi:'RTG',
+target:'5%',
+rows:[
+['1','500','I','14.59065016'],
+['501','1000','II','23.44914809'],
+['1001','1500','III','28.83988455'],
+['1501','2000','IV','31.90291987'],
+['2001','2500','V','33.92649903'],
+['2501','3000','VI','33.92649903'],
+['3001','3500','VII','33.92649903'],
+['3501','4000','VIII','33.92649903'],
+['4001','4500','IX','33.92649903'],
+['4501','5000','X','33.92649903'],
+['5001','6000','XI','33.92649903'],
+['6001','7000','XII','33.92649903'],
+['7001','8000','XIII','33.92649903'],
+['8001','9000','XIV','33.92649903'],
+['9001','11000','XV','33.92649903']
+]
+},
+
+LRMLW:{
+operandi:'EH/RS',
+target:'10%',
+rows:[
+['1','500','I','10.05698032'],
+['501','1000','II','13.04827586'],
+['1001','1500','III','16.57938744'],
+['1501','2000','IV','17.19165264'],
+['2001','2500','V','22.94322754'],
+['2501','3000','VI','22.94322754'],
+['3001','3500','VII','22.94322754'],
+['3501','4000','VIII','22.94322754'],
+['4001','4500','IX','22.94322754'],
+['4501','5000','X','22.94322754'],
+['5001','6000','XI','22.94322754'],
+['6001','7000','XII','22.94322754'],
+['7001','8000','XIII','22.94322754'],
+['8001','9000','XIV','22.94322754'],
+['9001','11000','XV','22.94322754']
+]
+}
+
+};
+function showView(id,btn){document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));document.getElementById(id).classList.remove('hidden');document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');}
+function searchValue(){return document.getElementById('search').value.trim().toLowerCase();}
+function matchesSearch(obj){const q=searchValue(); return !q || JSON.stringify(obj).toLowerCase().includes(q);}
+function filteredKpis(){return kpis.filter(matchesSearch);}
+function renderDefinitions(){
+ const order=['General KPIs','Operational Operandi KPIs','Terminal Specific KPIs'];
+ const data=filteredKpis();
+ let html='';
+ order.forEach(group=>{
+   const arr=data.filter(k=>k.group===group);
+   if(!arr.length) return;
+   html+=`<div class="categoryBlock"><div class="categoryHeader"><h2>${group}</h2><div class="catLine"></div></div><div class="kpiGrid">${arr.map(kpiCard).join('')}</div></div>`;
+ });
+ document.getElementById('definitions').innerHTML=html || `<div class="empty">No KPI found for this search.</div>`;
+}
+function tagClass(value){
+ const v = String(value).toLowerCase();
+
+ if(v.includes('general')) return 'general';
+ if(v.includes('operational')) return 'operational';
+ if(v.includes('rtg')) return 'rtg';
+ if(v.includes('straddle')) return 'straddle';
+ if(v.includes('automated') || v.includes('armg')) return 'armg';
+ if(v.includes('eh/rs') || v.includes('eh') || v.includes('rs')) return 'ehrs';
+
+ return '';
+}
+function kpiCard(k){
+ return `<article class="kpi ${k.card}">
+  <div class="kpiTop">
+    <div>
+      <h3>${k.name}</h3>
+      <div class="tags">
+
+        <span class="tag ${tagClass(k.group)}">
+          ${k.group.replace(' KPIs','')}
+        </span>
+
+        ${k.group === 'General KPIs'
+        ? ''
+        : [...new Set(k.applicability)]
+          .map(a=>`<span class="tag ${tagClass(a)}">${a}</span>`)
+          .join('')
+        }
+
+        ${k.status?`<span class="tag parked">${k.status}</span>`:''}
+
+      </div>
+    </div>
+
+    <div class="iconBadge">${k.icon||'⚙️'}</div>
+  </div>
+
+  <div class="label"><span>Definition</span></div>
+  <p class="definition">${k.definition}</p>
+
+  <div class="label"><span>Purpose</span></div>
+  <p class="purpose">${k.purpose}</p>
+
+  <div class="label"><span>Formula</span></div>
+  <div class="formula">
+    ${k.formula}
+    ${k.extraFormula?`<small>${k.extraFormula}</small>`:''}
+  </div>
+
+  ${k.variants
+    ? `<details open>
+        <summary>Equipment / Terminal Specific Definitions</summary>
+        ${k.variants.map(v=>`<div class="variantBox"><b>${v[0]}:</b> ${v[1]}</div>`).join('')}
+      </details>`
+    : ''
+  }
+
+  <details open>
+    <summary>Rules / Source</summary>
+    <ul class="rules">
+      ${k.rules.map(r=>`<li>${r}</li>`).join('')}
+    </ul>
+    <div class="source">Source: ${k.source}</div>
+  </details>
+
+ </article>`;
+}
+function renderApplicability(){
+
+const shownTerms = terminals;
+
+const searchValue = document.getElementById('search').value.toLowerCase();
+
+const shownKpis = kpis.filter(k =>
+  !searchValue ||
+  k.name.toLowerCase().includes(searchValue) ||
+  k.group.toLowerCase().includes(searchValue) ||
+  k.definition.toLowerCase().includes(searchValue) ||
+  k.purpose.toLowerCase().includes(searchValue) ||
+  k.formula.toLowerCase().includes(searchValue) ||
+  k.applicability.join(' ').toLowerCase().includes(searchValue)
+);
+
+ let html = `
+
+ <div class="terminalGroups">
+
+   <div class="groupBox rtg">
+     <h3>RTG Terminals</h3>
+     <p>MAPTM, OMSLL, EGPSD, BHBAH, NGAPP, NGONN, JOAQJ (Discharge Operations), HRRJK</p>
+   </div>
+
+   <div class="groupBox straddle">
+     <h3>Straddle Carrier Terminals</h3>
+     <p>SEGOT, DKAAR</p>
+   </div>
+
+   <div class="groupBox automated">
+     <h3>Automated (ARMG) Terminals</h3>
+     <p>MAMED, ITVAD</p>
+   </div>
+
+   <div class="groupBox ehrs">
+     <h3>EH/RS Terminals</h3>
+     <p>LRMLW, JOAQJ (Load Operations)</p>
+   </div>
+
+ </div>
+
+ <div class="matrixWrap">
+ <h2>Applicability per Terminal</h2>
+
+ <table>
+ <thead>
+ <tr>
+ <th>KPI</th>
+
+ ${shownTerms.map(t=>`
+   <th>
+     ${t.code}
+   </th>
+ `).join('')}
+
+ </tr>
+ </thead>
+
+ <tbody>
+ `;
+
+ shownKpis.forEach(k=>{
+
+   html += `<tr><td>${k.name}</td>`;
+
+   html += shownTerms.map(t=>{
+
+     const rows = targets[t.code] || [];
+
+     const inTarget = rows.some(r =>
+       normalize(r[0]) === normalize(k.name)
+     );
+
+     const parked = rows.some(r =>
+       normalize(r[0]) === normalize(k.name) &&
+       String(r[2]).toLowerCase().includes('parked')
+     );
+
+     const general = k.applicability.includes('General');
+
+     const eqMatch =
+       k.applicability.includes(t.equipment) ||
+       (t.equipment === 'Automated / ARMG' &&
+        k.applicability.includes('Automated / ARMG'));
+
+     const applicable = inTarget;
+
+if(parked){
+  return `<td class="parkedCell">Parked</td>`;
+}
+
+if(applicable){
+  return `<td class="yes">Yes</td>`;
+}
+
+return `<td class="no">N/A</td>`;
+
+   }).join('');
+
+   html += '</tr>';
+
+ });
+
+ html += `
+ </tbody>
+ </table>
+ </div>
+ `;
+
+ document.getElementById('applicability').innerHTML = html;
+}
+function renderTargets(){
+ const shown=terminals.filter(t=>matchesSearch(t) || (targets[t.code]||[]).some(matchesSearch));
+ document.getElementById('targets').innerHTML=`<div class="terminalCards">${shown.map(t=>{
+   const rows=targets[t.code];
+   return `<div class="terminalCard"><h2>${t.code}<span class="pill">${t.equipment}</span></h2><p class="muted">${t.source}</p>${rows?`<table><thead><tr><th>KPI</th><th>Target</th><th>Weight</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${r[0]}</td><td class="target">${r[1]}</td><td>${r[2]||'-'}</td></tr>`).join('')}</tbody></table>`:`<p class="muted">No PPT/target table loaded yet.</p>`}</div>`;
+ }).join('')}</div>`;
+}
+function renderPMPHTargets(){
+
+ let html = `<div class="pmphGrid">`;
+
+ Object.entries(pmphTargets).forEach(([terminal,data])=>{
+
+   html += `
+   <div class="pmphCard">
+
+     <div class="pmphHeader">
+       <h2>${terminal}</h2>
+       <span class="pmphWeight ${tagClass(data.operandi)}">
+${data.operandi || ''}
+${data.target ? ` | Target ${data.target}` : ''}
+</span>
+     </div>
+
+     <table>
+       <thead>
+         <tr>
+           <th>Min Moves</th>
+           <th>Max Moves</th>
+           <th>Call Seize</th>
+           <th>PMPH</th>
+         </tr>
+       </thead>
+
+       <tbody>
+
+       ${data.rows.map(r=>`
+         <tr>
+           <td>${r[0]}</td>
+           <td>${r[1]}</td>
+           <td>${r[2]}</td>
+           <td class="target">${r[3]}</td>
+         </tr>
+       `).join('')}
+
+       </tbody>
+     </table>
+
+   </div>
+   `;
+
+ });
+
+ html += `</div>`;
+
+ document.getElementById('pmphTargets').innerHTML = html;
+
+}
+function normalize(s){return String(s).toLowerCase().replace(/[^a-z0-9]/g,'');}
+function renderAll(){renderDefinitions();renderApplicability();renderTargets();renderPMPHTargets();}
+renderAll();
+</script>
+</body>
+</html>
