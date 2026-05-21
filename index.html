@@ -29,7 +29,7 @@ body{margin:0;font-family:Segoe UI,Arial,sans-serif;background:linear-gradient(1
 .containerStack{position:absolute;right:54px;bottom:38px;display:grid;grid-template-columns:repeat(3,42px);gap:6px}
 .cont{height:20px;border-radius:4px;background:rgba(255,122,0,.84);box-shadow:inset 0 0 0 1px rgba(255,255,255,.38)}
 .cont:nth-child(2),.cont:nth-child(5){background:rgba(34,184,176,.88)}.cont:nth-child(3){background:rgba(255,255,255,.28)}
-.tabs{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px}.tab{border:1px solid var(--line);background:white;border-radius:15px;padding:13px 18px;font:inherit;cursor:pointer;font-weight:800;box-shadow:0 5px 14px rgba(0,0,0,.04)}
+.tabs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin-bottom:18px;align-items:stretch;width:100%}.tab{border:1px solid var(--line);background:white;border-radius:15px;padding:13px 10px;font:inherit;cursor:pointer;font-weight:800;box-shadow:0 5px 14px rgba(0,0,0,.04);min-height:56px;width:100%;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.15;white-space:normal}
 .tab.active{background:var(--orange);color:white;border-color:var(--orange)}
 .searchWrap{background:white;border:1px solid var(--line);border-radius:22px;padding:16px;margin-bottom:18px;box-shadow:0 8px 22px rgba(0,0,0,.05);display:flex;gap:14px;align-items:center}
 .searchIcon{width:42px;height:42px;border-radius:14px;background:#e8f7fb;display:flex;align-items:center;justify-content:center;color:var(--blue);font-weight:900}
@@ -239,7 +239,50 @@ color:#005f8f;
 background:#f3e8ff;
 color:#6d28d9;
 }
-@media(max-width:1050px){.kpiGrid,.terminalCards,.opsNote{grid-template-columns:1fr}.shipArt{opacity:.25;right:5px}.hero h1{font-size:28px}.page{padding:16px}table{min-width:760px}}
+
+/* Unified tag / operandi colors across all tabs */
+.eqChip.rtg,.tag.rtg,.pmphWeight.rtg,.pill.rtg{background:#e0f2fe;color:#036985;}
+.eqChip.straddle,.tag.straddle,.pmphWeight.straddle,.pill.straddle{background:#fff1d6;color:#a65300;}
+.eqChip.armg,.tag.armg,.pmphWeight.armg,.pill.armg{background:#e8f7ff;color:#005f8f;}
+.eqChip.ehrs,.tag.ehrs,.pmphWeight.ehrs,.pill.ehrs{background:#f3e8ff;color:#6d28d9;}
+.tag.general,.pill.general{background:#fff4d8;color:#9a5a00;}
+.tag.operational{background:#d1fae5;color:#047857;}
+.tag.terminal{background:#ede9fe;color:#6d28d9;}
+
+.scoreCard,.formulaCard,.timelineIntro,.scopeIntro{
+background:white;border:1px solid var(--line);border-radius:24px;padding:20px;margin-bottom:18px;
+box-shadow:0 12px 28px rgba(0,0,0,.06)
+}
+.scoreCard h2,.formulaCard h2,.timelineIntro h2,.scopeIntro h2{margin:0 0 10px;color:var(--blue)}
+.scoreFormula{background:#f8fafc;border-left:5px solid var(--orange);border-radius:14px;padding:14px;font-weight:900;margin:12px 0;color:var(--blue)}
+.scoreRules{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px}
+.scoreRule{background:#fbfdff;border:1px solid var(--line);border-radius:16px;padding:14px;font-weight:800;color:#23364a}
+.formulaGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
+.formulaMini{background:#fbfdff;border:1px solid var(--line);border-left:5px solid var(--teal);border-radius:16px;padding:14px;font-weight:900;color:var(--blue)}
+.timelineGrid{display:grid;grid-template-columns:1fr;gap:18px;width:100%;align-items:start}
+.timelineCard{background:white;border:1px solid var(--line);border-radius:22px;padding:18px;box-shadow:0 8px 22px rgba(0,0,0,.05);overflow:hidden;min-width:0}
+.timelineCard h2{margin:0 0 12px;color:var(--blue)}
+.timelineCard table{width:100%;min-width:0;table-layout:fixed;border-collapse:collapse;border-spacing:0}
+.timelineCard th{color:var(--muted);font-size:13px;font-weight:900;padding:10px 8px;text-align:center;border-bottom:1px solid var(--line);white-space:normal}
+.timelineCard th:first-child{text-align:left}
+.timelineCard td{padding:10px 8px;border-bottom:1px solid #edf2f7;background:#fff;vertical-align:middle;text-align:center;font-weight:700;color:var(--txt);white-space:normal;word-break:break-word;overflow-wrap:anywhere}
+.timelineCard td:first-child{text-align:left;font-weight:900;color:var(--blue)}
+.timelineCard td:nth-child(2){font-weight:900;color:var(--blue)}
+.timelineCard th:nth-child(1),.timelineCard td:nth-child(1){width:48%}
+.timelineCard th:nth-child(2),.timelineCard td:nth-child(2){width:18%}
+.timelineCard th:nth-child(3),.timelineCard td:nth-child(3){width:34%}
+.scopeGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-bottom:18px}
+.scopeMetric{background:white;border:1px solid var(--line);border-radius:22px;padding:18px;box-shadow:0 8px 22px rgba(0,0,0,.05)}
+.scopeMetric b{display:block;font-size:30px;color:var(--orange);margin-bottom:6px}.scopeMetric span{font-weight:900;color:var(--blue)}
+.scopeTableWrap{background:white;border:1px solid var(--line);border-radius:24px;padding:20px;box-shadow:0 12px 28px rgba(0,0,0,.06);overflow:auto}
+.scopeTableWrap table{min-width:1000px}
+.scopeNote{color:var(--muted);font-weight:700;line-height:1.5;margin:6px 0 0}
+
+.scopeBad{color:#dc2626 !important;font-weight:900 !important;}
+.scopeGood{color:var(--blue);font-weight:900;}
+.scopeIssue td{background:#fff7f7;}
+
+@media(max-width:1050px){.tabs{grid-template-columns:repeat(2,minmax(0,1fr))}.kpiGrid,.terminalCards,.opsNote,.timelineGrid{grid-template-columns:1fr}.shipArt{opacity:.25;right:5px}.hero h1{font-size:28px}.page{padding:16px}table{min-width:760px}.timelineCard table{min-width:0}}
 </style>
 </head>
 <body>
@@ -255,11 +298,13 @@ color:#6d28d9;
     <button class="tab" onclick="showView('applicability',this)">Applicability per Terminal</button>
     <button class="tab" onclick="showView('targets',this)">Targets per Terminal</button>
     <button class="tab" onclick="showView('pmphTargets',this)">Global PMPH Targets</button>
+    <button class="tab" onclick="showView('timelines',this)">Terminals Timelines</button>
+    <button class="tab" onclick="showView('spcScope',this)">SPC KPIs & Scope</button>
   </div>
 
   <div class="searchWrap">
     <div class="searchIcon">⌕</div>
-    <input id="search" placeholder="Search KPI, terminal, equipment, formula, rule..." oninput="renderAll()" />
+    <input id="search" placeholder="Search KPI, Operational Operandi..." oninput="renderAll()" />
   </div>
 
   <div class="opsNote">
@@ -270,7 +315,7 @@ color:#6d28d9;
     <div class="noteCard">
       <h2>Operational Operandi</h2>
       <p>Operational Operandi defines the terminal operating model/equipment setup used to apply KPI logic and rules.</p>
-      <div class="equipmentChips"><span class="eqChip">RTG</span><span class="eqChip">Straddle Carrier</span><span class="eqChip">Automated / ARMG</span><span class="eqChip">EH/RS</span></div>
+      <div class="equipmentChips"><span class="eqChip rtg">RTG</span><span class="eqChip straddle">Straddle Carrier</span><span class="eqChip armg">Automated / ARMG</span><span class="eqChip ehrs">EH/RS</span></div>
     </div>
   </div>
 
@@ -278,6 +323,8 @@ color:#6d28d9;
   <section id="applicability" class="view hidden"></section>
   <section id="targets" class="view hidden"></section>
   <section id="pmphTargets" class="view hidden"></section>
+  <section id="timelines" class="view hidden"></section>
+  <section id="spcScope" class="view hidden"></section>
 </div>
 <script>
 const terminals = [
@@ -669,6 +716,7 @@ rows:[
 },
 
 JOAQJ:{
+operandi:'EH/RS',
 target:'5%',
 rows:[
 ['1','500','I','41.74'],
@@ -844,7 +892,214 @@ rows:[
 }
 
 };
-function showView(id,btn){document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));document.getElementById(id).classList.remove('hidden');document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');}
+const timelineData = {
+  'MAPTM': [
+    ['Baplie Receival','30','Prior ETB'],
+    ['Final Discharge Receival (MAE)','30','Prior ETB'],
+    ['Final Discharge Receival (Lines)','30','Prior ETB'],
+    ['Final load received (MAE)','24','Prior ETB'],
+    ['Final load received (Lines)','24','Prior ETB'],
+    ['SI Receival','18','Prior ETB'],
+    ['Final Load Running Notification','2','After Final Load Receival'],
+    ['HK planned','2','After Load Running Notification'],
+    ['Empties Rerouted','2','After Load Running Notification'],
+    ['QC & CWL Approval sent','2','After Max (Baplie, SI Receival, Final LL Receival)'],
+    ['QC & CWL Approval','1','After QC & CWL Approval sent'],
+    ['Planning Concluded (Pre-Plan Sent)','6','Prior ETB'],
+    ['Pre-Sign off / Sign off Request','5','Prior ETB'],
+    ['Sign off preformed','1','After Pre-Sign off / Sign off Request'],
+    ['Vessel Approval (Central Planner)','3','Prior ETB'],
+    ['Vessel Approval C/O','3','Prior ETB'],
+    ['Call Info','3','Prior ETB']
+  ],
+'HRRJK': [
+  ['Baplie Receival','24','Prior ETB'],
+  ['Final Discharge Receival (MAE)','24','Prior ETB'],
+  ['Final Discharge Receival (Lines)','24','Prior ETB'],
+  ['Discharge EDIs Received (Coreor and Cuscar)','24','Prior ETB'],
+  ['Final load received (MAE)','24','Prior ETB'],
+  ['Final load received (Lines)','24','Prior ETB'],
+  ['SI Receival','18','Prior ETB'],
+  ['Load Cleared & Empties Rerouted','16','Prior ETB'],
+  ['QC & CWL Approval sent','1','After (Max SI Receival, Baplie / Discharge Processed )'],
+  ['QC & CWL Approval','1','After QC & CWL Approval sent'],
+  ['Planning Concluded (Pre-Plan Sent)','6','Prior ETB'],
+  ['Pre-Sign off / Sign off Request','6','Prior ETB'],
+  ['Sign off preformed','1','After Pre-Sign off / Sign off Request'],
+  ['Vessel Approval (Central Planner)','4','Prior ETB'],
+  ['Vessel Approval C/O (To Be informed)','4','Prior ETB'],
+  ['Call Info','4','Prior ETB']
+],
+  'MAMED': [
+    ['Baplie Receival','30','Prior ETB'],
+    ['Final Discharge Receival (MAE)','30','Prior ETB'],
+    ['Final Discharge Receival (Lines)','30','Prior ETB'],
+    ['Final load received (MAE)','24','Prior ETB'],
+    ['Final load received (Lines)','24','Prior ETB'],
+    ['SI Receival','18','Prior ETB'],
+    ['Planning Concluded (Pre-Plan Sent)','6','Prior ETB'],
+    ['Final QC sent','4','Prior ETB'],
+    ['Vessel Approval (Central Planner)','4','Prior ETB'],
+    ['Vessel Approval C/O (To Be informed)','4','Prior ETB'],
+    ['Call Info','6','Prior ETB']
+  ],
+  'ITVAD': [
+    ['SI Receival','24','Prior ETB'],
+    ['Vessel Handover','16','Prior ETB'],
+    ['Planning Concluded','6','Prior ETB'],
+    ['Vessel Approval (Central Planner)','4','Prior ETB'],
+    ['Vessel Approval C/O (To Be informed)','4','Prior ETB'],
+    ['Call Info','4','Prior ETB']
+  ],
+  'SEGOT': [
+    ['SI Receival','24','Prior ETB'],
+    ['Vessel Handover','16','Prior ETB'],
+    ['Planning Concluded','6','Prior ETB'],
+    ['Vessel Approval (Central Planner)','4','Prior ETB'],
+    ['Vessel Approval C/O (To Be informed)','4','Prior ETB'],
+    ['Call Info','4','Prior ETB']
+  ],
+  'DKAAR': [
+    ['SI Receival','24','Prior ETB'],
+    ['Vessel Handover','16','Prior ETB'],
+    ['Planning Concluded','8','Prior ETB'],
+    ['Vessel Approval (Central Planner)','6','Prior ETB'],
+    ['Vessel Approval C/O (To Be informed)','6','Prior ETB'],
+    ['Call Info','6','Prior ETB']
+  ],
+'OMSLL': [
+  ['Baplie / Discharge Processed','30','Prior ETB'],
+  ['Load Processed','24','Prior ETB'],
+  ['SI Receival','24','Prior ETB'],
+  ['HK planned','18','Prior ETB'],
+  ['Empties Rerouted','18','Prior ETB'],
+  ['QC & CWL Approval sent','1','After (Max SI Receival, Baplie / Discharge Processed )'],
+  ['QC & CWL Approval','1','After QC & CWL Approval sent'],
+  ['Planning Concluded (Pre-Plan Sent)','8','Prior ETB'],
+  ['Pre-Sign off / Sign off Request','7','Prior ETB'],
+  ['Sign off preformed','6','Prior ETB'],
+  ['Vessel Approval (Central Planner)','6','Prior ETB'],
+  ['Vessel Approval C/O (To Be informed)','4','Prior ETB'],
+  ['Call Info','6','Prior ETB']
+],
+  'EGPSD': [
+  ['All Data Receival','18','Prior ETB'],
+  ['All Data Processed','3','After Data Receival'],
+  ['Vessel Handover','15','Prior ETB'],
+  ['Planning Concluded (Pre-Plan Sent)','7','Prior ETB'],
+  ['Pre-Sign off / Sign off Request','7','Prior ETB'],
+  ['Sign off preformed','1','After Pre-Sign off / Sign off Request'],
+  ['Call Info','6','Prior ETB']
+],
+  'NGONN': [
+  ['Baplie Receival','18','Prior ETB'],
+  ['Baplie Running Notification','2','After Baplie Receival'],
+  ['SI Receival','18','Prior ETB'],
+  ['Final LL Registration/Confirmation','12','Prior ETB'],
+  ['QC & CWL Approval Sent','2','After Max ( Baplie Receival, SI receival, Final LL )'],
+  ['QC & CWL Approval','1','After QC & CWL Approval Sent'],
+  ['Planning Concluded (Pre-Plan Sent)','3','Prior ETB'],
+  ['Pre-Sign off / Signoff Request','3','Prior ETB'],
+  ['Sign off Preformed','2','Prior ETB'],
+  ['Call Info','2','Prior ETB']
+],
+'BHBAH': [
+  ['Baplie Receival','24','Prior ETB'],
+  ['Baplie Running Notification','1','After Baplie Receival'],
+  ['SI Receival','18','Prior ETB'],
+  ['Final LL Registration/Confirmation','16','Prior ETB'],
+  ['QC & CWL Approval Sent','1','After Max ( Baplie Receival, SI receival, Final LL Receival )'],
+  ['QC & CWL Approval','1','After QC & CWL Approval Sent'],
+  ['Planning Concluded (Pre-Plan Sent)','8','Prior ETB'],
+  ['Pre-Sign off / Sign off Request','8','Prior ETB'],
+  ['Sign off Preformed','7','Prior ETB'],
+  ['Vessel Approval (Central Planner)','6','Prior ETB'],
+  ['Vessel Approval C/O (To Be informed)','6','Prior ETB'],
+  ['Call Info','6','Prior ETB']
+],
+'LRMLW': [
+  ['Baplie Receival','18','Prior ETB'],
+  ['Discharge Sent','2','After Baplie Receival'],
+  ['SI Receival','18','Prior ETB'],
+  ['Final LL Registration/Confirmation','12','Prior ETB'],
+  ['Planning Concluded (Pre-Plan Sent)','4','Prior ETB'],
+  ['Load Set sent','4','Prior ETB'],
+  ['Call Info','4','Prior ETB']
+],
+  'JOAQJ': [
+    ['Baplie Receival','24','Prior ETB'],
+    ['Baplie Running Notification','1','After Baplie Receival'],
+    ['DG List Notice','1','After Baplie Receival'],
+    ['DG Safety Recommendation','1','After DG List Notice'],
+    ['DG list Update','1','After DG Safety Recommendation'],
+    ['Cut Off Email','1','After Baplie Receival'],
+    ['SI Receival','18','Prior ETB'],
+    ['Max cranes','1','After Max (Baplie, SI Receival)'],
+    ['Final LL Registration/Confirmation','16','Prior ETB'],
+    ['QC & CWL Approval sent','1','After Max (Baplie, SI Receival, Final LL Registration/Confirmation)'],
+    ['QC & CWL Approval','1','After QC & CWL Approval sent'],
+    ['Planning Concluded (Pre-Plan Sent)','8','Prior ETB'],
+    ['Pre-Sign off / Sign off Request','7','Prior ETB'],
+    ['Sign off preformed','6','Prior ETB'],
+    ['Vessel Approval (Central Planner)','4','Prior ETB'],
+    ['Vessel Approval C/O (To Be informed)','4','Prior ETB'],
+    ['Final QC sent','4','Prior ETB'],
+    ['Call Info','4','Prior ETB']
+  ],
+  'NGAPP': [
+  ['Vessel Handover','12','Prior ETB'],
+  ['SI Receival','18','Prior ETB'],
+  ['QC & CWL Approval Sent','2','After Max (Vessel Handover, SI receival)'],
+  ['QC & CWL Approval','1','After QC & CWL Approval Sent'],
+  ['Planning Concluded (Pre-Plan Sent)','6','Prior ETB'],
+  ['Vessel Approval (Central Planner)','4','Prior ETB'],
+  ['Vessel Approval C/O (To Be informed)','4','Prior ETB'],
+  ['Call Info','4','Prior ETB']
+],
+};
+
+const spcScopeRows = [
+ ['MAMED','100%','100%','All Services'],
+ ['MAPTM','100%','100%','All Services'],
+ ['EGPSD','50%','50%','All MAE Calls & HLC Gemini Calls'],
+ ['OMSLL','60%','90%','All MAE (Except MECL West) & HLC Gemini Calls'],
+ ['NGAPP','100%','100%','All Services'],
+ ['NGONN','100%','100%','All Services'],
+ ['LRMLW','100%','100%','All Services'],
+ ['SEGOT','60%','60%','Lines: MAE / COS / MSC / ONE / CMA / HLC / XCL'],
+ ['DKAAR','30%','60%','AE5 / L02 / E01 / SWAN / L27 / N99 / ALBATROS'],
+ ['ITVAD','60%','60%','All Services (60% is based on terminal agreement each week)'],
+ ['HRRJK','100%','100%','All Services'],
+ ['BHBAH','100%','100%','All Services'],
+ ['JOAQJ','63%','100%','AR2 / CRM / CRX / EGRC / FM1 / IMS (E & W) / IRX2 / JJS / MSC-WRMS / RCS / REX & REX2 / RGI / RME / RS2 / RSS & Extra Calls for these services']
+];
+
+function showView(id,btn){
+
+ document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));
+ document.getElementById(id).classList.remove('hidden');
+
+ document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+ btn.classList.add('active');
+
+ const searchWrap = document.querySelector('.searchWrap');
+ const search = document.getElementById('search');
+
+ if(id === 'spcScope'){
+   searchWrap.style.display = 'none';
+   search.value = '';
+ }else{
+   searchWrap.style.display = 'flex';
+
+   if(id === 'definitions' || id === 'applicability'){
+     search.placeholder = 'Search KPI, Operational Operandi...';
+   }else{
+     search.placeholder = 'Search KPI, Terminal...';
+   }
+ }
+
+ renderAll();
+}
 function searchValue(){return document.getElementById('search').value.trim().toLowerCase();}
 function matchesSearch(obj){const q=searchValue(); return !q || JSON.stringify(obj).toLowerCase().includes(q);}
 function filteredKpis(){return kpis.filter(matchesSearch);}
@@ -910,14 +1165,14 @@ function kpiCard(k){
   </div>
 
   ${k.variants
-    ? `<details open>
+    ? `<details>
         <summary>Equipment / Terminal Specific Definitions</summary>
         ${k.variants.map(v=>`<div class="variantBox"><b>${v[0]}:</b> ${v[1]}</div>`).join('')}
       </details>`
     : ''
   }
 
-  <details open>
+  <details>
     <summary>Rules / Source</summary>
     <ul class="rules">
       ${k.rules.map(r=>`<li>${r}</li>`).join('')}
@@ -1041,64 +1296,128 @@ return `<td class="no">N/A</td>`;
 }
 function renderTargets(){
  const shown=terminals.filter(t=>matchesSearch(t) || (targets[t.code]||[]).some(matchesSearch));
- document.getElementById('targets').innerHTML=`<div class="terminalCards">${shown.map(t=>{
+ const scoreCard = `
+ <div class="scoreCard">
+   <h2>Vessel Score Calculation</h2>
+   <div class="scoreFormula">Score = Σ (KPI Score × KPI Weight)</div>
+   <div class="scoreRules">
+     <div class="scoreRule">On Target → KPI Score = 3</div>
+     <div class="scoreRule">Better than Target → KPI Score = 5</div>
+     <div class="scoreRule">Worse than Target → KPI Score = 1</div>
+   </div>
+   <p class="scopeNote">KPIs where SPC has no direct control are kept with weight 0%.</p>
+ </div>`;
+ document.getElementById('targets').innerHTML=scoreCard+`<div class="terminalCards">${shown.map(t=>{
    const rows=targets[t.code];
-   return `<div class="terminalCard"><h2>${t.code}<span class="pill">${t.equipment}</span></h2><p class="muted">${t.source}</p>${rows?`<table><thead><tr><th>KPI</th><th>Target</th><th>Weight</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${r[0]}</td><td class="target">${r[1]}</td><td>${r[2]||'-'}</td></tr>`).join('')}</tbody></table>`:`<p class="muted">No PPT/target table loaded yet.</p>`}</div>`;
+   return `<div class="terminalCard"><h2>${t.code}<span class="pill ${tagClass(t.equipment)}">${t.equipment}</span></h2><p class="muted">${t.source}</p>${rows?`<table><thead><tr><th>KPI</th><th>Target</th><th>Weight</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${r[0]}</td><td class="target">${r[1]}</td><td>${r[2]||'-'}</td></tr>`).join('')}</tbody></table>`:`<p class="muted">No PPT/target table loaded yet.</p>`}</div>`;
  }).join('')}</div>`;
 }
 function renderPMPHTargets(){
+ const q = searchValue();
 
- let html = `<div class="pmphGrid">`;
+ const formulaCard = `
+ <div class="formulaCard">
+   <h2>Port Hours / PMPH / CMPH Calculation</h2>
+   <div class="formulaGrid">
+     <div class="formulaMini">Port Hours = Operations Hours + Idle Time</div>
+     <div class="formulaMini">Operations Hours = Last Lift − First Lift</div>
+     <div class="formulaMini">Idle Time = (First Lift − First Line) + (Last Line − Last Lift)</div>
+     <div class="formulaMini">PMPH = Moves / Port Hours</div>
+     <div class="formulaMini">CMPH = Moves / Σ Crane Working Hours</div>
+   </div>
+ </div>`;
 
- Object.entries(pmphTargets).forEach(([terminal,data])=>{
+ let html = formulaCard + `<div class="pmphGrid">`;
 
+ Object.entries(pmphTargets)
+ .filter(([terminal,data]) =>
+   !q ||
+   terminal.toLowerCase().includes(q) ||
+   String(data.operandi).toLowerCase().includes(q)
+ )
+ .forEach(([terminal,data])=>{
    html += `
    <div class="pmphCard">
-
      <div class="pmphHeader">
        <h2>${terminal}</h2>
-       <span class="pmphWeight ${tagClass(data.operandi)}">
-${data.operandi || ''}
-${data.target ? ` | Target ${data.target}` : ''}
-</span>
+       <span class="pmphWeight ${tagClass(data.operandi)}">${data.operandi || ''}${data.target ? ` | Target ${data.target}` : ''}</span>
      </div>
-
      <table>
-       <thead>
-         <tr>
-           <th>Min Moves</th>
-           <th>Max Moves</th>
-           <th>Call Seize</th>
-           <th>PMPH</th>
-         </tr>
-       </thead>
-
+       <thead><tr><th>Min Moves</th><th>Max Moves</th><th>Call Size</th><th>PMPH</th></tr></thead>
        <tbody>
-
-       ${data.rows.map(r=>`
-         <tr>
-           <td>${r[0]}</td>
-           <td>${r[1]}</td>
-           <td>${r[2]}</td>
-           <td class="target">${r[3]}</td>
-         </tr>
-       `).join('')}
-
+       ${data.rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td class="target">${r[3]}</td></tr>`).join('')}
        </tbody>
      </table>
-
-   </div>
-   `;
-
+   </div>`;
  });
 
  html += `</div>`;
-
  document.getElementById('pmphTargets').innerHTML = html;
-
 }
+
+function renderTimelines(){
+ const q = searchValue();
+
+ let html = `
+ <div class="timelineIntro">
+   <h2>Timeline Definition</h2>
+   <p class="scopeNote">Terminal timeline milestones define the agreed planning checkpoints, time span, and time base condition used to monitor planning adherence.</p>
+ </div>
+ <div class="timelineGrid">`;
+
+ terminals
+ .filter(t =>
+   !q ||
+   t.code.toLowerCase().includes(q) ||
+   t.equipment.toLowerCase().includes(q)
+ )
+ .forEach(t=>{
+   const terminal = t.code;
+   const rows = timelineData[terminal];
+   if(!rows) return;
+
+   html += `<div class="timelineCard">
+     <h2>${terminal}</h2>
+     <table>
+       <thead><tr><th>Milestone</th><th>Time Span</th><th>Time Base Condition</th></tr></thead>
+       <tbody>
+         ${rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('')}
+       </tbody>
+     </table>
+   </div>`;
+ });
+
+ html += `</div>`;
+ document.getElementById('timelines').innerHTML = html;
+}
+
+function renderSPCScope(){
+ document.getElementById('spcScope').innerHTML = `
+ <div class="scopeIntro">
+   <h2>SPC KPIs</h2>
+   <div class="formulaGrid">
+     <div class="formulaMini">SPC Calls Adherence % = SPC Planned Calls / Total Calls of APM Controlled Terminals</div>
+     <div class="formulaMini">SPC Moves Adherence % = SPC Planned Moves / Total Moves of APM Controlled Terminals</div>
+   </div>
+   <p class="scopeNote"><b>APM Controlled Terminals:</b> terminals in which APM is managing operations, not only holding shares.</p>
+ </div>
+ <div class="scopeGrid">
+   <div class="scopeMetric"><b>60%</b><span>SPC Calls Adherence Target</span></div>
+   <div class="scopeMetric"><b>70%</b><span>SPC Moves Adherence Target</span></div>
+ </div>
+ <div class="scopeTableWrap">
+   <h2>SPC Tangier Terminals Scope - 2026 Agreement</h2>
+   <table>
+     <thead><tr><th>Terminal</th><th>Scope %</th><th>Scope Target %</th><th>Services / Line Operators</th></tr></thead>
+     <tbody>
+       ${spcScopeRows.map(r=>{ const scopeVal=parseFloat(String(r[1]).replace('%','')); const targetVal=parseFloat(String(r[2]||'').replace('%','')); const isBad=!isNaN(scopeVal)&&!isNaN(targetVal)&&scopeVal<targetVal; return `<tr class="${isBad?'scopeIssue':''}"><td>${r[0]}</td><td class="${isBad?'scopeBad':'scopeGood'}">${r[1]}</td><td class="target">${r[2]||'-'}</td><td>${r[3]}</td></tr>`; }).join('')}
+     </tbody>
+   </table>
+ </div>`;
+}
+
 function normalize(s){return String(s).toLowerCase().replace(/[^a-z0-9]/g,'');}
-function renderAll(){renderDefinitions();renderApplicability();renderTargets();renderPMPHTargets();}
+function renderAll(){renderDefinitions();renderApplicability();renderTargets();renderPMPHTargets();renderTimelines();renderSPCScope();}
 renderAll();
 </script>
 </body>
