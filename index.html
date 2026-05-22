@@ -360,6 +360,14 @@ display:flex;align-items:center;justify-content:center;padding:22px;font-family:
 .accessError{display:none;color:#dc2626;font-weight:800;font-size:13px;margin-top:12px;}
 .accessNote{margin-top:14px!important;font-size:12px!important;color:#64748b!important;}
 
+
+html.locked body > .page,
+html.locked body > .copyright{
+  display:none !important;
+}
+html.locked body{
+  user-select:none;
+}
 </style>
 </head>
 <body>
@@ -376,87 +384,205 @@ display:flex;align-items:center;justify-content:center;padding:22px;font-family:
   </div>
 </div>
 <script>
-const allowedUsers = {
-  "SHA496": "SHA-2007",
-  "HBO068": "HBO-2019",
-  "MEM068": "MEM-2019",
-  "SEH026": "SEH-2021",
-  "MYE021": "MYE-2019",
-  "AAJ078": "AAJ-2020",
-  "MEO021": "MEO-2019",
-  "MZI027": "MZI-2019",
-  "MAJ093": "MAJ-2025",
-  "IAY011": "IAY-2025",
-  "AIS074": "AIS-2023",
-  "LLA178": "LLA-2024",
-  "MCT035": "MCT-2025",
-  "RHA273": "RHA-2023",
-  "IEL031": "IEL-2024",
-  "YEL020": "YEL-2023",
-  "DDA232": "DDA-2025",
-  "HIH006": "HIH-2025",
-  "ICH108": "ICH-2025",
-  "NLA129": "NLA-2024",
-  "HMB018": "HMB-2024",
-  "MMO497": "MMO-2024",
-  "DBA371": "DBA-2025",
-  "KRI036": "KRI-2019",
-  "AEL152": "AEL-2025",
-  "MBO373": "MBO-2025",
-  "LWI084": "LWI-2023",
-  "OED005": "OED-2025",
-  "ABE341": "ABE-2023",
-  "DGH048": "DGH-2024",
-  "KIM020": "KIM-2022",
-  "MBE389": "MBE-2024",
-  "AOU033": "AOU-2025",
-  "HBE089": "HBE-2024",
-  "HBE090": "HBE-2024",
-  "IEL037": "IEL-2025",
-  "NTA120": "NTA-2024",
-  "ABE370": "ABE-2025",
-  "MCH539": "MCH-2024",
-  "NAT041": "NAT-2024",
-  "MAU041": "MAU-2025",
-  "AMH081": "AMH-2024",
-  "NSO091": "NSO-2023",
-  "WEL014": "WEL-2025",
-  "YHM011": "YHM-2023",
-  "AEL126": "AEL-2024",
-  "ABE364": "ABE-2024",
-  "HMA259": "HMA-2023",
-  "MBE366": "MBE-2024",
-  "DEL055": "DEL-2024",
-  "MZB013": "MZB-2025",
-  "MBE359": "MBE-2023",
-  "MBE339": "MBE-2023",
-  "MYO076": "MYO-2025",
-  "MSE253": "MSE-2024",
-  "SZA094": "SZA-2025",
-  "OOU007": "OOU-2023",
-  "MMK095": "MMK-2024",
-  "ATA312": "ATA-2024",
-  "KEL059": "KEL-2025",
-  "IOU004": "IOU-2026"
+/*
+  Client-side protection only.
+  This improves casual access protection, but it is not equivalent to server-side authentication.
+*/
+const ACCESS_PEPPER = "SPC-OPERATIONAL-BOOK-2026";
+const allowedUserHashes = {
+  "SHA496": "ab1ff5617fae7e337a04116793c2029627319b9cc6560efddbaf5adc1ca20b5a",
+  "HBO068": "df3b0b176a68d2d1caa8eeffb88b41ecd3994dc7dd7dd54b545b59df7b5dd097",
+  "MEM068": "dab63e549ee8c83adbefb06340c8ab75b3fd76fa64130fef90ca82000538adbd",
+  "SEH026": "dfd1327fc5efa2656966af3c810605ac95e9d2f4de11f3d83da47a064980bea3",
+  "MYE021": "af3e53db0257110897fab86ad829c440c2580658216310fa9b0bcc6bdef23f53",
+  "AAJ078": "9f299f2fe1a0784d5d424d4724d031bb8bc5ab524473d633ba1bcca4b76478d1",
+  "MEO021": "c359675955876ac0878d7cd9a88ab619a092558edd9a1a2cdc7267e1ea1d50e5",
+  "MZI027": "1aa81fb5c6662ace0a69f7f62bf8daf23cba611060e502eb7494befab099f225",
+  "MAJ093": "ba867f15e784f474bda9ef297cbebf5f8241e30cc31f0e454bcf5fcf661af9f9",
+  "IAY011": "5b1b707e0b5ae37fc1d480db3cf55d34d52fb85beb53a4bbffa2bf7028506456",
+  "AIS074": "53dcf7ba6d86aba5d57709d37f71f912b1a87ed88ec5257ea8be1aad6f0316fb",
+  "LLA178": "23ad498b3c06e29635fd8b915d15867bddd35bad84b9b67dd823afd27c5ac793",
+  "MCT035": "5b2d3bcc92a0936f47cad73de478291d3b4162ae45580296cff23a5a0c3422c7",
+  "RHA273": "68e32cdcceac3ffaf1478ca0db3c5718134639246ab96a5a7e70ef61751de7d8",
+  "IEL031": "6b9fd44300002db6520fcbb9605b31d410a635fe6c48081fbd9602699512facc",
+  "YEL020": "0dc25acbcd0eb6cb73cfe32f0a08e4fa49c96bd53e6c718d457969c36f20a459",
+  "DDA232": "1747c2282ae31526354a9cb2d846ee2c17f1b42826e8f2170d7b535ed56aae92",
+  "HIH006": "3ce3f31ed6abbea9c11f07e2ad97d68f2268fd3ddf1df4835d7af26baedef5b0",
+  "ICH108": "77ba5be43f0903e1b5a88c98c7151e3abda550f00f52292e4a380cc88af66f07",
+  "NLA129": "1d243d691d21d12bfa76b57121f102f52be27f31bfe18d4b67d2fe1854bf730d",
+  "HMB018": "b648760befd2e8b55c4181ba0843a8c75c71800fcdcd1a10081a324ee0e82131",
+  "MMO497": "7ea7af0d2facfd0043fda471193ba52f7cfd714f95cfa136e48af183c4828f97",
+  "DBA371": "0bc2c9f4928fee1ece4d6dd23984d8db1f405025e4af15933fb738eb11bc4aaf",
+  "KRI036": "a0f838d2e5e08ae040ad6fd2cff11eed92fb9abf589f7c802035a28ffd3b2d26",
+  "AEL152": "54a3dc7f6967ba9657801ad0d8500590496a766fafde31a9b15bda44cc6e882a",
+  "MBO373": "b5cd81a6faa5bbaa560477f6916ab0c88159baafa88f64b0c96511a30e1ec390",
+  "LWI084": "c89c30ce5e87185a4dc258d624d5357bd46e1dfcc445959060d0d0eb7c9de088",
+  "OED005": "1c6eb9a6a3a592251b3581c72424976a90c140463ef9af1482012ef48174a157",
+  "ABE341": "aadecf519520317d36ed54f7369281b0efb2fb9f2998c1abe4972c5dadb276e4",
+  "DGH048": "ff6606477803176b8ca318b014c36adc04f7de748cc5cd2fc097cb5d2140a0e4",
+  "KIM020": "d92725c94ad02f060945015d891a1f655ebcc62e5fc50289ec65d3ee9faaf1f3",
+  "MBE389": "c73a990e5d20d3e436babb1ddb648959d2aec66d73c27a67acbde39b85886ef1",
+  "AOU033": "e9299f2dfeb6bbbc503902ff21958afa4c50ec3d109c8340c4bc0e7756b8633a",
+  "HBE089": "dab33156f9938d6cb8f84ca9f4f2653a9db6b1448a57fc2725ba1f48b930ff41",
+  "HBE090": "2e89b8a8193d62d48369f0e9b7664f795b275b4391e161a1be7a3b5a12bb218d",
+  "IEL037": "8def0501a391ce551df9c2cc8e816fa882d0038f0c857a36c625f31102fa90fa",
+  "NTA120": "250da2196e183ae8e41a6a954a43d964c67c1f80da9372ac7b68baa8ebc57499",
+  "ABE370": "4dfcf6a58981732742334508ff587585861a5318af6f3390381de21dd8cafffd",
+  "MCH539": "3fbb717204704c880382e1d9afa485e77712704aa2dd82670774790e6d60536c",
+  "NAT041": "98a60babc7284d6e9b384f6865f660a25488710d7aac47e3214bf06707574b09",
+  "MAU041": "42318fbbdf0de1268e6711c466000fb67cd72c10e339eccb097fc626f341af07",
+  "AMH081": "ad24351c78673e8f3e651b6d7d914d37b5d07715282f370abaa924b32ca3a875",
+  "NSO091": "a9ff5bfa37378a4bf3f345bf8399792d444d30d33582d76eba8a5bb6aa931b68",
+  "WEL014": "9ecc07044899d93e6d1903f26f90b7decaef12b38af90ff0c7121e5bae713828",
+  "YHM011": "6e3aa01746258287e243604ec2f53715ceb900512f504fe6d501c01845d43b76",
+  "AEL126": "5fa3007030fed03dbf40491985c55e852d7045944f5743a68b58bd8b859e24ed",
+  "ABE364": "6ea9d1176b4c58e74dead2a94770f5530f4c8aa5331dc07d3c9e938fc0649c70",
+  "HMA259": "1328fd3a50dddbd32c9896d86c3a33bb4c0d59d2e4a69e075ed9c5f6228d0a20",
+  "MBE366": "9d9c208bd882b4fb3fcfa4fa79b2f6bc2a9aae87e7d68028779d78d7670ad176",
+  "DEL055": "d53443448397f06ab42333b4931dc81ad3c5946a04daa8ca99e8eca2a9e79a6f",
+  "MZB013": "242a5a83c125d216677e6481aa3be42d3fb58b6170a49545e40b476ef944e527",
+  "MBE359": "622c6a478da5d44f87eaf3e6c7da79babafcc71683069e396a006b05ae4737cc",
+  "MBE339": "e1c6feff3cc072acd50d4a9563198d61a4789bedbff1ca419efbe5c5299a11a7",
+  "MYO076": "3de42e91281263deac332860c2b6182d2aa1cd8d55ab3b19c81f321dc18c5d7b",
+  "MSE253": "bf237d58c08beb9796a224aaff15c2a589bce13d6a5b84459d768bb4feb5f5ef",
+  "SZA094": "62aea1361a5bbc4911157bb3e1cc6b3b923372a8e7de9383372ba4c0ea0d5302",
+  "OOU007": "78fbebb5b17e28ce3a44b662267a1b3f5adeed0b06c854632ea5d78a285ac0b3",
+  "MMK095": "49de82e1fd8f0119fe562ca10612c0d1687683192bfb8525204e346bd4209705",
+  "ATA312": "9a37d03b8e6ff382d38ebca3c55959160bc65ba0c12ddba54487e55e54b48044",
+  "KEL059": "7d4d4c997e1b9f395d682436c0984294ab17a46065bba08c14e1bb9d9313a9dd",
+  "IOU004": "038d7105743d459f7ff9094cb1b35630152b72bb244a2ac26de26db666e9370c"
 };
-function checkAccess(){
-  const user = document.getElementById('accessUser').value.trim().toUpperCase();
-  const pass = document.getElementById('accessPass').value.trim().toUpperCase();
-  if(allowedUsers[user] && allowedUsers[user].toUpperCase() === pass){
-    sessionStorage.setItem('spcAccessGranted','yes');
-    document.getElementById('accessScreen').style.display = 'none';
-  }else{
-    document.getElementById('accessError').style.display = 'block';
+
+const MAX_ATTEMPTS = 5;
+const LOCK_MINUTES = 15;
+const SESSION_MINUTES = 60;
+
+function enc(buffer){
+  return Array.from(new Uint8Array(buffer)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+async function sha256(text){
+  const data = new TextEncoder().encode(text);
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  return enc(hash);
+}
+
+function lockPage(){
+  document.documentElement.classList.add('locked');
+  const screen = document.getElementById('accessScreen');
+  if(screen) screen.style.display = 'flex';
+}
+
+function unlockPage(){
+  document.documentElement.classList.remove('locked');
+  const screen = document.getElementById('accessScreen');
+  if(screen) screen.style.display = 'none';
+}
+
+function isLockedOut(){
+  const until = Number(localStorage.getItem('spcLockUntil') || 0);
+  return Date.now() < until;
+}
+
+function setLockout(){
+  localStorage.setItem('spcLockUntil', String(Date.now() + LOCK_MINUTES * 60 * 1000));
+}
+
+function showAccessError(message){
+  const error = document.getElementById('accessError');
+  if(error){
+    error.textContent = message || 'Access denied. Please check your User ID and password.';
+    error.style.display = 'block';
   }
 }
+
+async function checkAccess(){
+  if(isLockedOut()){
+    const remaining = Math.ceil((Number(localStorage.getItem('spcLockUntil')) - Date.now()) / 60000);
+    showAccessError('Too many failed attempts. Try again in ' + remaining + ' minute(s).');
+    return;
+  }
+
+  const userInput = document.getElementById('accessUser');
+  const passInput = document.getElementById('accessPass');
+
+  const user = (userInput?.value || '').trim().toUpperCase();
+  const pass = (passInput?.value || '').trim().toUpperCase();
+
+  const calculatedHash = await sha256(user + ':' + pass + ':' + ACCESS_PEPPER);
+
+  if(allowedUserHashes[user] && allowedUserHashes[user] === calculatedHash){
+    const expiresAt = Date.now() + SESSION_MINUTES * 60 * 1000;
+    sessionStorage.setItem('spcAccessGranted','yes');
+    sessionStorage.setItem('spcAccessExpiresAt', String(expiresAt));
+    sessionStorage.setItem('spcAccessUser', user);
+    localStorage.removeItem('spcFailedAttempts');
+    localStorage.removeItem('spcLockUntil');
+    if(passInput) passInput.value = '';
+    unlockPage();
+  }else{
+    const attempts = Number(localStorage.getItem('spcFailedAttempts') || 0) + 1;
+    localStorage.setItem('spcFailedAttempts', String(attempts));
+    if(attempts >= MAX_ATTEMPTS){
+      setLockout();
+      localStorage.setItem('spcFailedAttempts','0');
+      showAccessError('Too many failed attempts. Access is locked for ' + LOCK_MINUTES + ' minutes.');
+    }else{
+      showAccessError('Access denied. Attempts left: ' + (MAX_ATTEMPTS - attempts));
+    }
+  }
+}
+
+function validateSession(){
+  const granted = sessionStorage.getItem('spcAccessGranted') === 'yes';
+  const expiresAt = Number(sessionStorage.getItem('spcAccessExpiresAt') || 0);
+
+  if(granted && Date.now() < expiresAt){
+    unlockPage();
+  }else{
+    sessionStorage.removeItem('spcAccessGranted');
+    sessionStorage.removeItem('spcAccessExpiresAt');
+    sessionStorage.removeItem('spcAccessUser');
+    lockPage();
+  }
+}
+
 document.addEventListener('keydown', function(e){
-  if(e.key === 'Enter' && document.getElementById('accessScreen').style.display !== 'none') checkAccess();
-});
-window.addEventListener('DOMContentLoaded', function(){
-  if(sessionStorage.getItem('spcAccessGranted') === 'yes'){
-    document.getElementById('accessScreen').style.display = 'none';
+  const key = (e.key || '').toUpperCase();
+
+  if(e.key === 'Enter' && document.getElementById('accessScreen')?.style.display !== 'none'){
+    checkAccess();
+  }
+
+  if(
+    e.key === 'F12' ||
+    (e.ctrlKey && e.shiftKey && ['I','J','C','K'].includes(key)) ||
+    (e.ctrlKey && ['U','S','P'].includes(key))
+  ){
+    e.preventDefault();
+    e.stopPropagation();
+    return false;
+  }
+}, true);
+
+document.addEventListener('contextmenu', e => e.preventDefault(), true);
+document.addEventListener('copy', e => e.preventDefault(), true);
+document.addEventListener('cut', e => e.preventDefault(), true);
+document.addEventListener('dragstart', e => e.preventDefault(), true);
+
+window.addEventListener('blur', function(){
+  const screen = document.getElementById('accessScreen');
+  if(screen && screen.style.display === 'none'){
+    document.body.style.filter = 'blur(8px)';
   }
 });
+
+window.addEventListener('focus', function(){
+  document.body.style.filter = '';
+});
+
+setInterval(validateSession, 30000);
+window.addEventListener('DOMContentLoaded', validateSession);
 </script>
 
 <div class="page">
