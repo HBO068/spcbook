@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex,nofollow" />
 <title>SPC Operational KPIs Book</title>
 <style>
 :root{
@@ -345,9 +346,119 @@ background:var(--blue2);
 }
 
 @media(max-width:1050px){.tabs{grid-template-columns:repeat(2,minmax(0,1fr))}.kpiGrid,.terminalCards,.opsNote,.timelineGrid{grid-template-columns:1fr}.shipArt{opacity:.25;right:5px}.hero h1{font-size:28px}.page{padding:16px}table{min-width:760px}.timelineCard table{min-width:0}}
+
+.accessScreen{
+position:fixed;inset:0;background:linear-gradient(135deg,#003b5c,#006f98);z-index:999999;
+display:flex;align-items:center;justify-content:center;padding:22px;font-family:Segoe UI,Arial,sans-serif;
+}
+.accessBox{width:100%;max-width:390px;background:white;border-radius:24px;padding:30px;box-shadow:0 20px 55px rgba(0,0,0,.28);text-align:center;}
+.accessBox h2{margin:0 0 8px;color:#003b5c;font-size:26px;}
+.accessBox p{margin:0 0 20px;color:#64748b;line-height:1.45;font-size:14px;}
+.accessBox input{width:100%;border:1px solid #dbe7ee;border-radius:14px;padding:13px 14px;margin-bottom:12px;font-size:15px;outline:none;}
+.accessBox input:focus{border-color:#006f98;box-shadow:0 0 0 3px rgba(0,111,152,.12);}
+.accessBox button{width:100%;border:0;border-radius:14px;background:#ff7a00;color:white;font-weight:900;padding:13px 14px;font-size:15px;cursor:pointer;}
+.accessError{display:none;color:#dc2626;font-weight:800;font-size:13px;margin-top:12px;}
+.accessNote{margin-top:14px!important;font-size:12px!important;color:#64748b!important;}
+
 </style>
 </head>
 <body>
+
+<div id="accessScreen" class="accessScreen">
+  <div class="accessBox">
+    <h2>SPC Internal Access</h2>
+    <p>Confidential platform. Authorized users only.</p>
+    <input id="accessUser" type="text" placeholder="User ID" autocomplete="off" />
+    <input id="accessPass" type="password" placeholder="Password" autocomplete="off" />
+    <button type="button" onclick="checkAccess()">Access Platform</button>
+    <div id="accessError" class="accessError">Access denied. Please check your User ID and password.</div>
+    <p class="accessNote">Internal use only. Do not share your access details.</p>
+  </div>
+</div>
+<script>
+const allowedUsers = {
+  "SHA496": "SHA-2007",
+  "HBO068": "HBO-2019",
+  "MEM068": "MEM-2019",
+  "SEH026": "SEH-2021",
+  "MYE021": "MYE-2019",
+  "AAJ078": "AAJ-2020",
+  "MEO021": "MEO-2019",
+  "MZI027": "MZI-2019",
+  "MAJ093": "MAJ-2025",
+  "IAY011": "IAY-2025",
+  "AIS074": "AIS-2023",
+  "LLA178": "LLA-2024",
+  "MCT035": "MCT-2025",
+  "RHA273": "RHA-2023",
+  "IEL031": "IEL-2024",
+  "YEL020": "YEL-2023",
+  "DDA232": "DDA-2025",
+  "HIH006": "HIH-2025",
+  "ICH108": "ICH-2025",
+  "NLA129": "NLA-2024",
+  "HMB018": "HMB-2024",
+  "MMO497": "MMO-2024",
+  "DBA371": "DBA-2025",
+  "KRI036": "KRI-2019",
+  "AEL152": "AEL-2025",
+  "MBO373": "MBO-2025",
+  "LWI084": "LWI-2023",
+  "OED005": "OED-2025",
+  "ABE341": "ABE-2023",
+  "DGH048": "DGH-2024",
+  "KIM020": "KIM-2022",
+  "MBE389": "MBE-2024",
+  "AOU033": "AOU-2025",
+  "HBE089": "HBE-2024",
+  "HBE090": "HBE-2024",
+  "IEL037": "IEL-2025",
+  "NTA120": "NTA-2024",
+  "ABE370": "ABE-2025",
+  "MCH539": "MCH-2024",
+  "NAT041": "NAT-2024",
+  "MAU041": "MAU-2025",
+  "AMH081": "AMH-2024",
+  "NSO091": "NSO-2023",
+  "WEL014": "WEL-2025",
+  "YHM011": "YHM-2023",
+  "AEL126": "AEL-2024",
+  "ABE364": "ABE-2024",
+  "HMA259": "HMA-2023",
+  "MBE366": "MBE-2024",
+  "DEL055": "DEL-2024",
+  "MZB013": "MZB-2025",
+  "MBE359": "MBE-2023",
+  "MBE339": "MBE-2023",
+  "MYO076": "MYO-2025",
+  "MSE253": "MSE-2024",
+  "SZA094": "SZA-2025",
+  "OOU007": "OOU-2023",
+  "MMK095": "MMK-2024",
+  "ATA312": "ATA-2024",
+  "KEL059": "KEL-2025",
+  "IOU004": "IOU-2026"
+};
+function checkAccess(){
+  const user = document.getElementById('accessUser').value.trim().toUpperCase();
+  const pass = document.getElementById('accessPass').value.trim().toUpperCase();
+  if(allowedUsers[user] && allowedUsers[user].toUpperCase() === pass){
+    sessionStorage.setItem('spcAccessGranted','yes');
+    document.getElementById('accessScreen').style.display = 'none';
+  }else{
+    document.getElementById('accessError').style.display = 'block';
+  }
+}
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Enter' && document.getElementById('accessScreen').style.display !== 'none') checkAccess();
+});
+window.addEventListener('DOMContentLoaded', function(){
+  if(sessionStorage.getItem('spcAccessGranted') === 'yes'){
+    document.getElementById('accessScreen').style.display = 'none';
+  }
+});
+</script>
+
 <div class="page">
   <div class="hero">
     <h1>SPC Operational KPIs</h1>
