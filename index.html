@@ -6,6 +6,17 @@
 <meta name="robots" content="noindex,nofollow" />
 <title>SPC Operational KPIs Book</title>
 <style>
+* {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+input, textarea {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  user-select: text;
+}
 :root{
   --blue:#003b5c;--blue2:#006f98;--blue3:#0b5f78;--orange:#ff7a00;--teal:#22b8b0;
   --bg:#eef5f8;--card:#ffffff;--txt:#0f172a;--muted:#64748b;--line:#dbe7ee;
@@ -487,6 +498,57 @@ html.locked body{
 </head>
 <body>
 
+<!-- ============================================================
+     PROTECTION LAYER 1 — DevTools debugger timing detection
+     Fires every second; if debugger pauses execution > 150ms
+     (which only happens when DevTools is open), the page is
+     blanked and locked.
+     ============================================================ -->
+<script>
+(function devToolsDebuggerGuard(){
+  var _threshold = 150;
+  function _check(){
+    var _t = performance.now();
+    (function(){})['constructor']('debugger')();
+    if(performance.now() - _t > _threshold){
+      document.body.innerHTML = '';
+      document.documentElement.style.background = '#003b5c';
+      sessionStorage.removeItem('spcAccessGranted');
+    }
+  }
+  try{ setInterval(_check, 1000); } catch(e){}
+})();
+</script>
+
+<!-- ============================================================
+     PROTECTION LAYER 2 — Window size DevTools detection
+     Detects undocked DevTools by comparing outer/inner dimensions.
+     Blurs and disables the page when developer tools panel is open.
+     ============================================================ -->
+<script>
+(function devToolsSizeGuard(){
+  var _blurred = false;
+  function _checkSize(){
+    var _wDiff = window.outerWidth  - window.innerWidth;
+    var _hDiff = window.outerHeight - window.innerHeight;
+    var _open  = _wDiff > 160 || _hDiff > 160;
+    if(_open && !_blurred){
+      _blurred = true;
+      document.body.style.filter        = 'blur(20px)';
+      document.body.style.pointerEvents = 'none';
+      document.body.style.userSelect    = 'none';
+    } else if(!_open && _blurred){
+      _blurred = false;
+      document.body.style.filter        = '';
+      document.body.style.pointerEvents = '';
+      document.body.style.userSelect    = '';
+    }
+  }
+  window.addEventListener('resize', _checkSize);
+  setInterval(_checkSize, 800);
+})();
+</script>
+
 <div id="accessScreen" class="accessScreen">
   <div class="accessBox">
     <h2>SPC Internal Access</h2>
@@ -662,6 +724,12 @@ function validateSession(){
   }
 }
 
+/* ============================================================
+   PROTECTION LAYER 3 — Keyboard & event hardening
+   Blocks DevTools shortcuts, view-source, save, print-preview,
+   right-click, copy, cut, drag.  All existing originals kept;
+   extra shortcuts added below.
+   ============================================================ */
 document.addEventListener('keydown', function(e){
   const key = (e.key || '').toUpperCase();
 
@@ -669,6 +737,7 @@ document.addEventListener('keydown', function(e){
     checkAccess();
   }
 
+  /* Block DevTools, view-source, save, print */
   if(
     e.key === 'F12' ||
     (e.ctrlKey && e.shiftKey && ['I','J','C','K'].includes(key)) ||
@@ -678,13 +747,28 @@ document.addEventListener('keydown', function(e){
     e.stopPropagation();
     return false;
   }
+
+  /* Additional: block F5 reload attempt with Ctrl, and Ctrl+A select all */
+  if(
+    (e.ctrlKey && key === 'A') ||
+    (e.ctrlKey && e.shiftKey && key === 'S')
+  ){
+    e.preventDefault();
+    e.stopPropagation();
+    return false;
+  }
 }, true);
 
 document.addEventListener('contextmenu', e => e.preventDefault(), true);
-document.addEventListener('copy', e => e.preventDefault(), true);
-document.addEventListener('cut', e => e.preventDefault(), true);
+document.addEventListener('copy',      e => e.preventDefault(), true);
+document.addEventListener('cut',       e => e.preventDefault(), true);
 document.addEventListener('dragstart', e => e.preventDefault(), true);
 
+/* ============================================================
+   PROTECTION LAYER 4 — Window focus / blur guard
+   Blurs content when user switches away (tab screenshot risk).
+   Restores on focus.
+   ============================================================ */
 window.addEventListener('blur', function(){
   const screen = document.getElementById('accessScreen');
   if(screen && screen.style.display === 'none'){
@@ -785,7 +869,7 @@ const kpis = [
   formula:'Rehandles % = (Number of Rehandled Containers / Total Containers Loaded from the Yard) × 100',
   rules:['Heap areas are excluded.'],source:'TOS Vessel Work Instructions'},
  {name:'Twin Planning',group:'Operational Operandi KPIs',card:'operational',applicability:['Straddle Carrier','RTG','Automated / ARMG','EH/RS'],icon:'🔗',
-  definition:'Measures how often twin containers are planned to be handled together, according to the terminal’s equipment and operational setup.',
+  definition:'Measures how often twin containers are planned to be handled together, according to the terminal\'s equipment and operational setup.',
   purpose:'Increase handling efficiency by planning twin lifts whenever operationally possible.',
   formula:'Twin Planning = (Number of Twins Planned / Number of Twin Opportunities) × 100',
   rules:['Heap areas are excluded.'],source:'TOS Vessel Work Instructions'},
