@@ -656,6 +656,7 @@ const kpis = [
   definition:'Measures how closely the planned crane intensity aligns with the Central Planner / Terminal given CI.',
   purpose:'Align planned CI with agreed operational targets while considering crane availability.',
   formula:'CI Adherence = (Planned CI / Given CI) × 100',
+  extraFormula:'CI Planned = Σ (All Crane Hours) /  Longest crane (Operations Hours) ',
   rules:['Crane availability is considered in the Given CI for some terminals.'],source:'Emails & TOS'},
  {name:'Port Hours Saved',group:'General KPIs',card:'general',applicability:['General'],icon:'⚓',
   definition:'Measures the reduction in vessel port stay achieved through planning decisions.',
@@ -775,7 +776,7 @@ const targets = {
     ['Planning Turnaround Time','4h','10%'],
     ['Stowage Quality','90%','5%'],
     ['Rehandles','1%','10%'],
-    ['Twin Planning','80%','10%'],
+    ['Twin Planning','90%','10%'],
     ['Yard Clashes','1%','5%'],
     ['Loading Points','4.5','15%'],
     ['Alternation','80%','5%'],
@@ -783,13 +784,14 @@ const targets = {
     ['Stacks Evacuation','80%','15%'],
     ['Yard Mirroring','75%','10%'],
     ['Rows Evacuation','80%','0%'],
-    ['Dual Cycling','50%','0%']
+    ['Yard Picking Sequence Adherence','90%','Parked'],
+    ['Dual Cycling','N/A','Parked']
   ],
   DKAAR:[
     ['Planning Turnaround Time','6h','0%'],
     ['Stowage Quality','90%','0%'],
     ['Rehandles','1%','0%'],
-    ['Twin Planning','80%','0%'],
+    ['Twin Planning','90%','0%'],
     ['Yard Clashes','1%','0%'],
     ['Loading Points','4.5','0%'],
     ['Alternation','80%','0%'],
@@ -797,7 +799,8 @@ const targets = {
     ['Stacks Evacuation','80%','0%'],
     ['Yard Mirroring','75%','0%'],
     ['Rows Evacuation','80%','0%'],
-    ['Dual Cycling','50%','0%']
+    ['Yard Picking Sequence Adherence','90%','Parked'],
+    ['Dual Cycling','N/A','Parked']
   ],
  HRRJK: [
   ['Planning Turnaround Time','4h','0%'],
