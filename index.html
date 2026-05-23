@@ -310,38 +310,153 @@ background:var(--blue2);
 }
 
 @media print{
+  *{
+    -webkit-print-color-adjust:exact !important;
+    print-color-adjust:exact !important;
+  }
+
+  @page{
+    size:A4;
+    margin:10mm 10mm 14mm 10mm;
+  }
+
   body{
     background:white !important;
   }
+
   .tabs,
   .searchWrap,
   .exportPdfBtn,
   .opsNote,
-  .copyright{
+  .accessScreen{
     display:none !important;
   }
+
   .view{
     display:none !important;
   }
+
   #definitions{
     display:block !important;
   }
+
   .page{
     max-width:none !important;
     padding:0 !important;
   }
-  .categoryHeader{
-    break-after:avoid;
-    page-break-after:avoid;
+
+  .hero{
+    display:block !important;
+    background:linear-gradient(135deg,var(--blue),var(--blue2)) !important;
+    color:white !important;
+    border-radius:20px !important;
+    padding:22px 28px !important;
+    margin:0 0 12px 0 !important;
+    min-height:118px !important;
+    box-shadow:none !important;
+    break-inside:avoid !important;
+    page-break-inside:avoid !important;
+    break-after:avoid !important;
+    page-break-after:avoid !important;
   }
+
+  .hero h1{
+    color:white !important;
+    font-size:28px !important;
+    margin-bottom:6px !important;
+  }
+
+  .hero p{
+    color:#dcf7ff !important;
+    font-size:13px !important;
+    line-height:1.35 !important;
+    max-width:700px !important;
+  }
+
+  .shipArt{
+    display:block !important;
+    transform:scale(.72);
+    transform-origin:right bottom;
+    right:10px !important;
+    bottom:6px !important;
+    opacity:.95 !important;
+  }
+
+  .categoryBlock{
+    margin-top:0 !important;
+    margin-bottom:12px !important;
+    break-before:auto !important;
+    page-break-before:auto !important;
+  }
+
+  .categoryHeader{
+    margin:10px 0 8px !important;
+    break-after:avoid !important;
+    page-break-after:avoid !important;
+  }
+
+  .categoryHeader h2{
+    font-size:20px !important;
+  }
+
   .kpiGrid{
     grid-template-columns:1fr !important;
-    gap:12px !important;
+    gap:10px !important;
   }
+
   .kpi{
-    break-inside:avoid;
-    page-break-inside:avoid;
+    break-inside:avoid !important;
+    page-break-inside:avoid !important;
     box-shadow:none !important;
+    margin-bottom:10px !important;
+    padding:16px !important;
+    border-radius:18px !important;
+  }
+
+  .kpi h3{
+    font-size:20px !important;
+  }
+
+  .definition,
+  .purpose,
+  .rules,
+  .formula,
+  .variantBox{
+    font-size:12px !important;
+  }
+
+  details{
+    display:block !important;
+  }
+
+  details summary{
+    list-style:none !important;
+  }
+
+  details summary::-webkit-details-marker{
+    display:none !important;
+  }
+
+  details > *{
+    display:block !important;
+  }
+
+  details[open] > *{
+    display:block !important;
+  }
+
+  .copyright{
+    display:block !important;
+    position:fixed;
+    bottom:4mm;
+    left:0;
+    right:0;
+    text-align:center;
+    font-size:10px;
+    font-weight:700;
+    color:#64748b;
+    padding:0;
+    margin:0;
   }
 }
 
@@ -1735,7 +1850,6 @@ function exportDefinitionsPDF(){
  const previousView = [...document.querySelectorAll('.view')].find(v=>!v.classList.contains('hidden'))?.id || 'definitions';
  const previousTab = document.querySelector('.tab.active');
 
- search.value = '';
  renderAll();
 
  document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));
@@ -1775,7 +1889,7 @@ function renderAll(){renderDefinitions();renderApplicability();renderTargets();r
 renderAll();
 </script>
 <div class="copyright">
-SPC Tangier – HBO Confidential & Proprietary
+SPC Tangier_HBO © Confidential & Proprietary – Internal Use Only
 </div>
 </body>
 </html>
