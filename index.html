@@ -523,7 +523,7 @@ html.locked body{
 <!-- ============================================================
      PROTECTION LAYER 2 — Window size DevTools detection
      Detects undocked DevTools by comparing outer/inner dimensions.
-     Blurs and disables the page when developer tools panel is open.
+     Disables the page when developer tools panel is open.
      ============================================================ -->
 <script>
 (function devToolsSizeGuard(){
@@ -534,12 +534,10 @@ html.locked body{
     var _open  = _wDiff > 160 || _hDiff > 160;
     if(_open && !_blurred){
       _blurred = true;
-      document.body.style.filter        = 'blur(20px)';
       document.body.style.pointerEvents = 'none';
       document.body.style.userSelect    = 'none';
     } else if(!_open && _blurred){
       _blurred = false;
-      document.body.style.filter        = '';
       document.body.style.pointerEvents = '';
       document.body.style.userSelect    = '';
     }
@@ -765,9 +763,8 @@ document.addEventListener('cut',       e => e.preventDefault(), true);
 document.addEventListener('dragstart', e => e.preventDefault(), true);
 
 /* ============================================================
-   PROTECTION LAYER 4 — Window focus / blur guard
-   Blurs content when user switches away (tab screenshot risk).
-   Restores on focus.
+   PROTECTION LAYER 4 — Window focus guard
+   Restores normal state on focus.
    ============================================================ */
 
 window.addEventListener('focus', function(){
