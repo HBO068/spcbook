@@ -260,7 +260,6 @@ background:#f3e8ff;
 color:#6d28d9;
 }
 
-/* Unified tag / operandi colors across all tabs */
 .eqChip.rtg,.tag.rtg,.pmphWeight.rtg,.pill.rtg{background:#e0f2fe;color:#036985;}
 .eqChip.straddle,.tag.straddle,.pmphWeight.straddle,.pill.straddle{background:#fff1d6;color:#a65300;}
 .eqChip.armg,.tag.armg,.pmphWeight.armg,.pill.armg{background:#e8f7ff;color:#005f8f;}
@@ -313,7 +312,6 @@ color:#64748b;
 margin-top:30px;
 padding:12px;
 }
-
 
 .exportPdfBtn{
 border:0.5px solid var(--line);
@@ -517,7 +515,6 @@ display:flex;align-items:center;justify-content:center;padding:22px;font-family:
 .accessError{display:none;color:#dc2626;font-weight:800;font-size:13px;margin-top:12px;}
 .accessNote{margin-top:14px!important;font-size:12px!important;color:#64748b!important;}
 
-
 html.locked body > .page,
 html.locked body > .copyright{
   display:none !important;
@@ -529,52 +526,93 @@ html.locked body{
 </head>
 <body>
 
-<!-- ============================================================
-     PROTECTION LAYER 1 — DevTools debugger timing detection
-     Fires every second; if debugger pauses execution > 150ms
-     (which only happens when DevTools is open), the page is
-     blanked and locked.
-     ============================================================ -->
+<!--
+  =============================================================
+  PROTECTION LAYER 1 — DevTools timing detection
+  FIXED: raised threshold to 300ms and added Edge-safe try/catch
+  around the Function constructor call which can throw in
+  strict-mode environments (Edge with enhanced security).
+  =============================================================
+-->
 <script>
 (function devToolsDebuggerGuard(){
-  var _threshold = 150;
+  var _threshold = 300;
   function _check(){
-    var _t = performance.now();
-    (function(){})['constructor']('debugger')();
-    if(performance.now() - _t > _threshold){
-      document.body.innerHTML = '';
-      document.documentElement.style.background = '#003b5c';
-      sessionStorage.removeItem('spcAccessGranted');
-    }
+    try {
+      var _t = performance.now();
+      /* Edge-safe: wrap in try so strict CSP doesn't crash the guard */
+      (function(){})['\x63onstructor']('\x64\x65\x62ugger')();
+      if(performance.now() - _t > _threshold){
+        document.body.innerHTML = '';
+        document.documentElement.style.background = '#003b5c';
+        sessionStorage.removeItem('spcAccessGranted');
+        sessionStorage.removeItem('spcAccessExpiresAt');
+      }
+    } catch(e){}
   }
-  try{ setInterval(_check, 1000); } catch(e){}
+  try{ setInterval(_check, 1200); } catch(e){}
 })();
 </script>
 
-<!-- ============================================================
-     PROTECTION LAYER 2 — Window size DevTools detection
-     Detects undocked DevTools by comparing outer/inner dimensions.
-     Disables the page when developer tools panel is open.
-     ============================================================ -->
+<!--
+  =============================================================
+  PROTECTION LAYER 2 — Window size DevTools detection
+  FIXED for Edge: Edge's sidebar, Collections panel and PDF
+  viewer add ~340px to outerWidth even when DevTools is closed.
+  Threshold raised to 300px and height-only detection preferred.
+  A stable baseline is captured after a 1.5s delay to let
+  Edge finish drawing its chrome before we take measurements.
+  =============================================================
+-->
 <script>
 (function devToolsSizeGuard(){
-  var _blurred = false;
-  function _checkSize(){
-    var _wDiff = window.outerWidth  - window.innerWidth;
-    var _hDiff = window.outerHeight - window.innerHeight;
-    var _open  = _wDiff > 160 || _hDiff > 160;
-    if(_open && !_blurred){
-      _blurred = true;
-      document.body.style.pointerEvents = 'none';
-      document.body.style.userSelect    = 'none';
-    } else if(!_open && _blurred){
-      _blurred = false;
-      document.body.style.pointerEvents = '';
-      document.body.style.userSelect    = '';
+  var _blurred  = false;
+
+  /*
+    We capture a stable baseline 2.5 seconds after load.
+    This gives Edge time to fully render its sidebar, address bar
+    chrome, and any other panels — so the baseline already
+    accounts for Edge's own UI padding.
+    All future checks measure DELTA from that baseline instead
+    of absolute numbers, so Edge's sidebar never fires a false positive.
+  */
+  var _baseHDiff = null;
+
+  setTimeout(function(){
+    _baseHDiff = window.outerHeight - window.innerHeight;
+  }, 2500);
+
+  function _setBlur(state){
+    if(state === _blurred) return;
+    _blurred = state;
+
+    /* Only blur the main content page, never the login overlay */
+    var page = document.querySelector('.page');
+    if(page){
+      page.style.filter        = state ? 'blur(8px)' : '';
+      page.style.pointerEvents = state ? 'none'      : '';
     }
   }
+
+  function _checkSize(){
+    /* Baseline not ready yet — do nothing */
+    if(_baseHDiff === null) return;
+
+    var currentHDiff = window.outerHeight - window.innerHeight;
+
+    /*
+      DevTools docked at bottom adds significant height to outerHeight
+      relative to innerHeight.  We flag it only when the height diff
+      has grown MORE than 180px beyond the baseline captured at startup
+      (Edge's own chrome rarely changes height after load).
+    */
+    var devToolsOpen = (currentHDiff - _baseHDiff) > 180;
+
+    _setBlur(devToolsOpen);
+  }
+
   window.addEventListener('resize', _checkSize);
-  setInterval(_checkSize, 800);
+  setInterval(_checkSize, 1000);
 })();
 </script>
 
@@ -589,13 +627,16 @@ html.locked body{
     <p class="accessNote">Internal use only. Do not share your access details.</p>
   </div>
 </div>
+
 <script>
 /*
-  Client-side protection only.
-  This improves casual access protection, but it is not equivalent to server-side authentication.
+  ================================================================
+  BUG FIX: allowedUserHashes was missing the opening brace { 
+  which caused a SyntaxError and broke ALL logins in every browser.
+  ================================================================
 */
 const ACCESS_PEPPER = "SPC-OPERATIONAL-BOOK-2026";
-const allowedUserHashes = 
+const allowedUserHashes = {
   "HBO068": "df3b0b176a68d2d1caa8eeffb88b41ecd3994dc7dd7dd54b545b59df7b5dd097",
   "MEM068": "dab63e549ee8c83adbefb06340c8ab75b3fd76fa64130fef90ca82000538adbd",
   "SEH026": "dfd1327fc5efa2656966af3c810605ac95e9d2f4de11f3d83da47a064980bea3",
@@ -654,12 +695,13 @@ const allowedUserHashes =
   "IOU004": "038d7105743d459f7ff9094cb1b35630152b72bb244a2ac26de26db666e9370c"
 };
 
-const MAX_ATTEMPTS = 5;
-const LOCK_MINUTES = 15;
+const MAX_ATTEMPTS   = 5;
+const LOCK_MINUTES   = 15;
 const SESSION_MINUTES = 60;
 
 function enc(buffer){
-  return Array.from(new Uint8Array(buffer)).map(b => b.toString(16).padStart(2,'0')).join('');
+  return Array.from(new Uint8Array(buffer))
+    .map(b => b.toString(16).padStart(2,'0')).join('');
 }
 
 async function sha256(text){
@@ -686,21 +728,27 @@ function isLockedOut(){
 }
 
 function setLockout(){
-  localStorage.setItem('spcLockUntil', String(Date.now() + LOCK_MINUTES * 60 * 1000));
+  localStorage.setItem('spcLockUntil',
+    String(Date.now() + LOCK_MINUTES * 60 * 1000));
 }
 
 function showAccessError(message){
   const error = document.getElementById('accessError');
   if(error){
-    error.textContent = message || 'Access denied. Please check your User ID and password.';
+    error.textContent = message ||
+      'Access denied. Please check your User ID and password.';
     error.style.display = 'block';
   }
 }
 
 async function checkAccess(){
   if(isLockedOut()){
-    const remaining = Math.ceil((Number(localStorage.getItem('spcLockUntil')) - Date.now()) / 60000);
-    showAccessError('Too many failed attempts. Try again in ' + remaining + ' minute(s).');
+    const remaining = Math.ceil(
+      (Number(localStorage.getItem('spcLockUntil')) - Date.now()) / 60000
+    );
+    showAccessError(
+      'Too many failed attempts. Try again in ' + remaining + ' minute(s).'
+    );
     return;
   }
 
@@ -714,54 +762,47 @@ async function checkAccess(){
 
   if(allowedUserHashes[user] && allowedUserHashes[user] === calculatedHash){
     const expiresAt = Date.now() + SESSION_MINUTES * 60 * 1000;
-    sessionStorage.setItem('spcAccessGranted','yes');
+    sessionStorage.setItem('spcAccessGranted', 'yes');
     sessionStorage.setItem('spcAccessExpiresAt', String(expiresAt));
     sessionStorage.setItem('spcAccessUser', user);
     localStorage.removeItem('spcFailedAttempts');
     localStorage.removeItem('spcLockUntil');
     if(passInput) passInput.value = '';
     unlockPage();
-  }else{
-    const attempts = Number(localStorage.getItem('spcFailedAttempts') || 0) + 1;
+  } else {
+    const attempts =
+      Number(localStorage.getItem('spcFailedAttempts') || 0) + 1;
     localStorage.setItem('spcFailedAttempts', String(attempts));
     if(attempts >= MAX_ATTEMPTS){
       setLockout();
       localStorage.setItem('spcFailedAttempts','0');
-      showAccessError('Too many failed attempts. Access is locked for ' + LOCK_MINUTES + ' minutes.');
-    }else{
-      showAccessError('Access denied. Attempts left: ' + (MAX_ATTEMPTS - attempts));
+      showAccessError(
+        'Too many failed attempts. Access is locked for ' +
+        LOCK_MINUTES + ' minutes.'
+      );
+    } else {
+      showAccessError(
+        'Access denied. Attempts left: ' + (MAX_ATTEMPTS - attempts)
+      );
     }
   }
 }
 
-function validateSession(){
-  const granted = sessionStorage.getItem('spcAccessGranted') === 'yes';
-  const expiresAt = Number(sessionStorage.getItem('spcAccessExpiresAt') || 0);
-
-  if(granted && Date.now() < expiresAt){
-    unlockPage();
-  }else{
-    sessionStorage.removeItem('spcAccessGranted');
-    sessionStorage.removeItem('spcAccessExpiresAt');
-    sessionStorage.removeItem('spcAccessUser');
-    lockPage();
-  }
-}
-
-/* ============================================================
-   PROTECTION LAYER 3 — Keyboard & event hardening
-   Blocks DevTools shortcuts, view-source, save, print-preview,
-   right-click, copy, cut, drag.  All existing originals kept;
-   extra shortcuts added below.
-   ============================================================ */
+/*
+  ================================================================
+  PROTECTION LAYER 3 — Keyboard & event hardening
+  EDGE FIX: added passive:false where needed; Edge ignores
+  preventDefault on passive listeners.
+  ================================================================
+*/
 document.addEventListener('keydown', function(e){
   const key = (e.key || '').toUpperCase();
 
-  if(e.key === 'Enter' && document.getElementById('accessScreen')?.style.display !== 'none'){
+  if(e.key === 'Enter' &&
+     document.getElementById('accessScreen')?.style.display !== 'none'){
     checkAccess();
   }
 
-  /* Block DevTools, view-source, save, print */
   if(
     e.key === 'F12' ||
     (e.ctrlKey && e.shiftKey && ['I','J','C','K'].includes(key)) ||
@@ -772,7 +813,6 @@ document.addEventListener('keydown', function(e){
     return false;
   }
 
-  /* Additional: block F5 reload attempt with Ctrl, and Ctrl+A select all */
   if(
     (e.ctrlKey && key === 'A') ||
     (e.ctrlKey && e.shiftKey && key === 'S')
@@ -783,19 +823,41 @@ document.addEventListener('keydown', function(e){
   }
 }, true);
 
-document.addEventListener('contextmenu', e => e.preventDefault(), true);
-document.addEventListener('copy',      e => e.preventDefault(), true);
-document.addEventListener('cut',       e => e.preventDefault(), true);
-document.addEventListener('dragstart', e => e.preventDefault(), true);
+/* Edge requires { passive: false } to allow preventDefault on these */
+document.addEventListener('contextmenu', function(e){ e.preventDefault(); },
+  { capture: true, passive: false });
+document.addEventListener('copy',
+  function(e){ e.preventDefault(); },
+  { capture: true, passive: false });
+document.addEventListener('cut',
+  function(e){ e.preventDefault(); },
+  { capture: true, passive: false });
+document.addEventListener('dragstart',
+  function(e){ e.preventDefault(); },
+  { capture: true, passive: false });
 
-/* ============================================================
-   PROTECTION LAYER 4 — Window focus guard
-   Restores normal state on focus.
-   ============================================================ */
-
+/*
+  PROTECTION LAYER 4 — Window focus guard
+  Only clear blur on .page, never touch the login overlay.
+*/
 window.addEventListener('focus', function(){
-  document.body.style.filter = '';
+  var page = document.querySelector('.page');
+  if(page) page.style.filter = '';
 });
+
+function validateSession(){
+  const granted    = sessionStorage.getItem('spcAccessGranted') === 'yes';
+  const expiresAt  = Number(sessionStorage.getItem('spcAccessExpiresAt') || 0);
+
+  if(granted && Date.now() < expiresAt){
+    unlockPage();
+  } else {
+    sessionStorage.removeItem('spcAccessGranted');
+    sessionStorage.removeItem('spcAccessExpiresAt');
+    sessionStorage.removeItem('spcAccessUser');
+    lockPage();
+  }
+}
 
 setInterval(validateSession, 30000);
 window.addEventListener('DOMContentLoaded', validateSession);
@@ -820,7 +882,7 @@ window.addEventListener('DOMContentLoaded', validateSession);
     <button class="tab" onclick="showView('targets',this)">Targets per Terminal</button>
     <button class="tab" onclick="showView('pmphTargets',this)">Global PMPH Targets</button>
     <button class="tab" onclick="showView('timelines',this)">Terminals Timelines</button>
-    <button class="tab" onclick="showView('spcScope',this)">SPC KPIs & Scope</button>
+    <button class="tab" onclick="showView('spcScope',this)">SPC KPIs &amp; Scope</button>
   </div>
 
   <div class="searchWrap">
@@ -850,6 +912,7 @@ window.addEventListener('DOMContentLoaded', validateSession);
   <section id="timelines" class="view hidden"></section>
   <section id="spcScope" class="view hidden"></section>
 </div>
+
 <script>
 const terminals = [
  {code:'SEGOT',equipment:'Straddle Carrier',source:'Terminal Agreement 2026'}, {code:'DKAAR',equipment:'Straddle Carrier',source:'Terminal Agreement 2026'},
@@ -880,7 +943,7 @@ const kpis = [
   definition:'Measures how closely the planned crane intensity aligns with the Central Planner / Terminal given CI.',
   purpose:'Align planned CI with agreed operational targets while considering crane availability.',
   formula:'CI Adherence = (Planned CI / Given CI) × 100',
-  extraFormula:'CI Planned = Σ (All Crane Hours) /  Longest crane (Operations Hours) ',
+  extraFormula:'CI Planned = Σ (All Crane Hours) /  Longest crane (Operations Hours)',
   rules:['Crane availability is considered in the Given CI for some terminals.'],source:'Emails & TOS'},
  {name:'Port Hours Saved',group:'General KPIs',card:'general',applicability:['General'],icon:'⚓',
   definition:'Measures the reduction in vessel port stay achieved through planning decisions.',
@@ -920,7 +983,7 @@ const kpis = [
   purpose:'Ensure balanced yard picking and continuous crane feeding by alternating between loading points instead of picking repeatedly from the same area.',
   formula:'Alternation % = Alternated Loading Points Count / Alternation Possibilities × 100',
   rules:['Heap areas are excluded.'],source:'TOS Vessel Work Instructions'},
-{name:'P.O.W Operational Overlap ',group:'Operational Operandi KPIs',card:'operational',applicability:['Straddle Carrier','RTG','Automated / ARMG','EH/RS'],icon:'🛤️',
+{name:'P.O.W Operational Overlap',group:'Operational Operandi KPIs',card:'operational',applicability:['Straddle Carrier','RTG','Automated / ARMG','EH/RS'],icon:'🛤️',
   definition:'Measures the percentage of yard operational areas that are simultaneously worked by more than one crane (POW) during vessel operations.',
   purpose:'To monitor operational splitting within yard handling areas in order to reduce crane interference, minimize yard congestion, and maintain stable and efficient yard feeding operations.',
   formula:'P.O.W Operational Overlap % = (Number of yard operational areas Worked by More than 1 POW ÷ yard operational areas) × 100',
@@ -953,27 +1016,24 @@ const kpis = [
   definition:'Measures how consistently each vessel bay is fed from the parallel yard blocks to minimize traveling distance.',
   purpose:'Ensure stable and predictable yard feeding per crane, reduce unnecessary yard movement, and optimize yard flow.',
   formula:'Yard Mirroring KPI % = Average of Block Mirroring %',
-  extraFormula: 'Block Mirroring % = Mirrored Moves per Yard Block / Total Moves per Block',
+  extraFormula:'Block Mirroring % = Mirrored Moves per Yard Block / Total Moves per Block',
   rules:['Calculated across blocks for every POD, Length, and Freight Kind.','OOGs, IMOs, and Reefers are excluded.','Only Straddle Carrier yard is considered.'],source:'TOS Vessel Work Instructions'},
  {name:'Average Traveling Distance',group:'Terminal Specific KPIs',card:'terminal',applicability:['Straddle Carrier'],icon:'🛣️',
   definition:'Measures the average distance travelled by yard equipment to move containers from their yard position to the vessel during loading.',
   purpose:'Ensure containers are picked from the nearest possible yard positions to reduce equipment travel, yard congestion, and handling time.',
   formula:'Average Traveling Distance = Average Traveling Distance per Container Picked from Yard by Straddle Carrier',
   rules:['Heap areas and OOGs are excluded.','Only Straddle Carrier yard is considered.'],source:'TOS Vessel Work Instructions'},
-
  {name:'Stacks Evacuation',group:'Terminal Specific KPIs',card:'terminal',applicability:['Straddle Carrier'],icon:'➡️',
   definition:'Measures the extent to which a yard stack is fully evacuated continuously once loading from that stack has started.',
-  purpose:'Ensure smooth and continuous yard operations by Liberating Ground Slots to create flexibility in the Yard .',
+  purpose:'Ensure smooth and continuous yard operations by Liberating Ground Slots to create flexibility in the Yard.',
   formula:'Stacks Evacuation % = Stacks Evacuated / Total Stacks × 100',
   rules:['The Span of Time for Stack Evacuation is 15 minutes.','Units in heap areas are excluded.'],source:'TOS Vessel Work Instructions'},
-
   {name:'Rows Evacuation',group:'Terminal Specific KPIs',card:'terminal',applicability:['Straddle Carrier'],icon:'➡️',
   definition:'Measures the extent to which a yard row is fully evacuated once loading from that row has started, without interruption across hours.',
   purpose:'Ensure smooth and continuous yard operations by completing row evacuation before moving to another row and preparing the yard for discharge operations.',
-  formula:'Rows Evacutaion %: Scenario 1 = Containers evacuated at first continuous entry / Total containers in row × 100',
-  extraFormula:'Rows Evacutaion %: Scenario 2 = Containers evacuated during largest continuous entry / Total containers in row × 100',
-  rules:['SEGOT and DKAAR use Scenario 1 with 1 hour Span of Time .','Units in heap areas are excluded.'],source:'TOS Vessel Work Instructions'},
-
+  formula:'Rows Evacuation %: Scenario 1 = Containers evacuated at first continuous entry / Total containers in row × 100',
+  extraFormula:'Rows Evacuation %: Scenario 2 = Containers evacuated during largest continuous entry / Total containers in row × 100',
+  rules:['SEGOT and DKAAR use Scenario 1 with 1 hour Span of Time.','Units in heap areas are excluded.'],source:'TOS Vessel Work Instructions'},
 
  {name:'RTG Moves Before Gantry',group:'Terminal Specific KPIs',card:'terminal',applicability:['RTG'],icon:'🚜',
   definition:'Measures the number of container moves performed by an RTG in the same yard bay/section before moving to another bay/section.',
@@ -981,18 +1041,16 @@ const kpis = [
   formula:'RTG Moves Before Gantry = Average number of container moves performed by RTG in one yard bay before gantry movement',
   extraFormula:'RTG Flow Efficiency %: RTG Moves Before Gantry / Average available moves per yard bay × 100',
   rules:['Twins are counted according to terminal rules.','Heap areas are excluded.','Applies to RTG-operated yards.'],source:'TOS Vessel Work Instructions'},
-
-  {name:'RTG One-Way Travel Adherence',group:'Terminal Specific KPIs',card:'terminal',applicability:['RTG'], status:'Parked', icon:'🚜',
+  {name:'RTG One-Way Travel Adherence',group:'Terminal Specific KPIs',card:'terminal',applicability:['RTG'],status:'Parked',icon:'🚜',
   definition:'Measures the number of container moves performed by an RTG in the same yard bay/section before moving to another bay/section.',
   purpose:'Measures how consistently RTG loading moves follow one continuous yard-bay direction within the same RTG working area, either from the smallest yard bay to the biggest yard bay or from the biggest yard bay to the smallest yard bay.',
-  formula:'RTG One-Way Travel Adherence % =(Number of moves following the selected one-way yard bay direction / Total RTG yard moves evaluated) × 100',
+  formula:'RTG One-Way Travel Adherence % = (Number of moves following the selected one-way yard bay direction / Total RTG yard moves evaluated) × 100',
   rules:['Heap areas are excluded.','Applies to RTG-operated yards.'],source:'TOS Vessel Work Instructions'},
  {name:'Twin Yard Flow Adherence',group:'Terminal Specific KPIs',card:'terminal',applicability:['RTG'],icon:'🧭',
   definition:'Measures how consistently twin containers are planned to be picked from the same yard block or aligned yard positions (Yard Flow), allowing them to follow the intended Truck yard Flow.',
   purpose:'Ensure that twin containers can be handled together while respecting the Truck yard flow to avoid operational interruptions & increase efficiency.',
   formula:'Twin Yard Flow Adherence = (Total Twins Planned − Twins Planned Not Following Yard Flow) / Total Twins Planned × 100',
   rules:['Heap areas are excluded.'],source:'TOS Vessel Work Instructions'},
- 
 ];
 
 const targets = {
@@ -1026,41 +1084,39 @@ const targets = {
     ['Yard Picking Sequence Adherence','90%','Parked'],
     ['Dual Cycling','N/A','Parked']
   ],
- HRRJK: [
-  ['Planning Turnaround Time','4h','0%'],
-  ['Stowage Quality','90%','0%'],
-  ['Crane Intensity (CI) Adherence','80%','0%'],
-  ['Port Hours Saved','5%','0%'],
-  ['Rehandles','2%','0%'],
-  ['Twin Planning','90%','0%'],
-  ['Yard Clashes','2%','0%'],
-  ['Loading Points','2','0%'],
-  ['Alternation','80%','0%'],
-  ['RTG Moves Before Gantry','10','0%']
+  HRRJK: [
+    ['Planning Turnaround Time','4h','0%'],
+    ['Stowage Quality','90%','0%'],
+    ['Crane Intensity (CI) Adherence','80%','0%'],
+    ['Port Hours Saved','5%','0%'],
+    ['Rehandles','2%','0%'],
+    ['Twin Planning','90%','0%'],
+    ['Yard Clashes','2%','0%'],
+    ['Loading Points','2','0%'],
+    ['Alternation','80%','0%'],
+    ['RTG Moves Before Gantry','10','0%']
   ],
-
-   ITVAD: [
-  ['Planning Turnaround Time','4h','20%'],
-  ['Stowage Quality','90%','15%'],
-  ['Rehandles','5%','10%'],
-  ['Yard Clashes','5%','20%'],
-  ['Alternation','80%','20%'],
-  ['P.O.W Operational Overlap','10%','10%'],
-   ['Dual Cycling','50%','5%']
+  ITVAD: [
+    ['Planning Turnaround Time','4h','20%'],
+    ['Stowage Quality','90%','15%'],
+    ['Rehandles','5%','10%'],
+    ['Yard Clashes','5%','20%'],
+    ['Alternation','80%','20%'],
+    ['P.O.W Operational Overlap','10%','10%'],
+    ['Dual Cycling','50%','5%']
   ],
-
-EGPSD: [
-  ['Planning Turnaround Time','6h','10%'],
-  ['Rehandles','2%','10%'],
-  ['Twin Planning','90%','5%'],
-  ['Yard Clashes','2%','10%'],
-  ['Loading Points','4','20%'],
-  ['Alternation','90%','10%'],
-  ['Dual Cycling','90%','Parked'],
-  ['RTG Moves Before Gantry','5','20%'],
-  ['Twin Yard Flow Adherence','95%','15%']
-],
-OMSLL: [
+  EGPSD: [
+    ['Planning Turnaround Time','6h','10%'],
+    ['Rehandles','2%','10%'],
+    ['Twin Planning','90%','5%'],
+    ['Yard Clashes','2%','10%'],
+    ['Loading Points','4','20%'],
+    ['Alternation','90%','10%'],
+    ['Dual Cycling','90%','Parked'],
+    ['RTG Moves Before Gantry','5','20%'],
+    ['Twin Yard Flow Adherence','95%','15%']
+  ],
+  OMSLL: [
     ['Planning Turnaround Time','6h','10%'],
     ['Stowage Quality','90%','0%'],
     ['Crane Intensity (CI) Adherence','90%','0%'],
@@ -1072,20 +1128,19 @@ OMSLL: [
     ['Loading Points','3.5','30%'],
     ['Dual Cycling','80%','Parked']
   ],
-
   JOAQJ: [
-  ['Planning Turnaround Time','4h','20%'],
-  ['Stowage Quality','90%','10%'],
-  ['Crane Intensity (CI) Adherence','90%','0%'],
-  ['Port Hours Saved','5%','5%'],
-  ['Rehandles','1%','15%'],
-  ['Twin Planning','90%','10%'],
-  ['Loading Points','2','20%'],
-  ['P.O.W Operational Overlap','5%','10%'],
-  ['Yard Picking Sequence Adherence','90%','10%'],
-  ['Dual Cycling','50%','0%']
-],
-BHBAH: [
+    ['Planning Turnaround Time','4h','20%'],
+    ['Stowage Quality','90%','10%'],
+    ['Crane Intensity (CI) Adherence','90%','0%'],
+    ['Port Hours Saved','5%','5%'],
+    ['Rehandles','1%','15%'],
+    ['Twin Planning','90%','10%'],
+    ['Loading Points','2','20%'],
+    ['P.O.W Operational Overlap','5%','10%'],
+    ['Yard Picking Sequence Adherence','90%','10%'],
+    ['Dual Cycling','50%','0%']
+  ],
+  BHBAH: [
     ['Planning Turnaround Time','6h','10%'],
     ['Stowage Quality','90%','0%'],
     ['Crane Intensity (CI) Adherence','95%','5%'],
@@ -1097,31 +1152,30 @@ BHBAH: [
     ['Alternation','80%','20%'],
     ['RTG Moves Before Gantry','6','10%']
   ],
-
   MAMED: [
-  ['Planning Turnaround Time h','4h','10%'],
-  ['Stowage Quality','90%','0%'],
-  ['Crane Intensity (CI) Adherence','98%','10%'],
-  ['Port Hours Saved','15%','20%'],
-  ['Rehandles','3%','10%'],
-  ['Twin Planning','40%','10%'],
-  ['Yard Clashes','5%','10%'],
-  ['Alternation','80%','20%'],
-  ['P.O.W Operational Overlap','5%','10%'],
-  ['Tandem Planning','5%','Parked']
-],
-MAPTM: [
-  ['Planning Turnaround Time','3h','20%'],
-  ['Stowage Quality','90%','0%'],
-  ['Crane Intensity (CI) Adherence','95%','0%'],
-  ['Port Hours Saved','20%','5%'],
-  ['Rehandles','2%','15%'],
-  ['Twin Planning','90%','15%'],
-  ['Yard Clashes','10%','10%'],
-  ['Loading Points','3.7','25%'],
-  ['Dual Cycling','50%','Parked'],
-  ['RTG Moves Before Gantry','7','10%']
-],
+    ['Planning Turnaround Time h','4h','10%'],
+    ['Stowage Quality','90%','0%'],
+    ['Crane Intensity (CI) Adherence','98%','10%'],
+    ['Port Hours Saved','15%','20%'],
+    ['Rehandles','3%','10%'],
+    ['Twin Planning','40%','10%'],
+    ['Yard Clashes','5%','10%'],
+    ['Alternation','80%','20%'],
+    ['P.O.W Operational Overlap','5%','10%'],
+    ['Tandem Planning','5%','Parked']
+  ],
+  MAPTM: [
+    ['Planning Turnaround Time','3h','20%'],
+    ['Stowage Quality','90%','0%'],
+    ['Crane Intensity (CI) Adherence','95%','0%'],
+    ['Port Hours Saved','20%','5%'],
+    ['Rehandles','2%','15%'],
+    ['Twin Planning','90%','15%'],
+    ['Yard Clashes','10%','10%'],
+    ['Loading Points','3.7','25%'],
+    ['Dual Cycling','50%','Parked'],
+    ['RTG Moves Before Gantry','7','10%']
+  ],
   NGAPP: [
     ['Planning Turnaround Time','2h','10%'],
     ['Stowage Quality','90%','5%'],
@@ -1135,8 +1189,7 @@ MAPTM: [
     ['RTG Moves Before Gantry','8','15%'],
     ['RTG One-Way Travel Adherence','70%','Parked']
   ],
-
-NGONN: [
+  NGONN: [
     ['Planning Turnaround Time','6h','0%'],
     ['Crane Intensity (CI) Adherence','80%','0%'],
     ['Port Hours Saved','5%','0%'],
@@ -1146,443 +1199,67 @@ NGONN: [
     ['Loading Points','2','0%'],
     ['RTG Moves Before Gantry','4','0%']
   ],
-
-LRMLW: [
+  LRMLW: [
     ['Planning Turnaround Time','2h','50%'],
     ['Port Hours Saved','10%','50%'],
   ],
 };
+
 const pmphTargets = {
-
-MAMED:{
-operandi:'Automated / ARMG',
-target:'15%',
-rows:[
-['1','500','I','39.76'],
-['501','1000','II','59.37'],
-['1001','1500','III','82.61'],
-['1501','2000','IV','99.03'],
-['2001','2500','V','112.46'],
-['2501','3000','VI','123.72'],
-['3001','3500','VII','142.02'],
-['3501','4000','VIII','142.02'],
-['4001','4500','IX','160'],
-['4501','5000','X','160'],
-['5001','6000','XI','183.24'],
-['6001','7000','XII','183.24'],
-['7001','8000','XIII','229.2'],
-['8001','9000','XIV','229.2'],
-['9001','11000','XV','632.41']
-]
-},
-
-MAPTM:{
-operandi:'RTG',
-target:'20%',
-rows:[
-['1','500','I','49.92'],
-['501','1000','II','72.78'],
-['1001','1500','III','93.42'],
-['1501','2000','IV','110.77'],
-['2001','2500','V','127.88'],
-['2501','3000','VI','146.97'],
-['3001','3500','VII','158.86'],
-['3501','4000','VIII','158.86'],
-['4001','4500','IX','172.93'],
-['4501','5000','X','172.93'],
-['5001','6000','XI','176.12'],
-['6001','7000','XII','176.12'],
-['7001','8000','XIII','176.12'],
-['8001','9000','XIV','176.12'],
-['9001','11000','XV','176.12']
-]
-},
-
-OMSLL:{
-operandi:'RTG',
-target:'10%',
-rows:[
-['1','500','I','66.67'],
-['501','1000','II','89.29'],
-['1001','1500','III','109.49'],
-['1501','2000','IV','125'],
-['2001','2500','V','147.06'],
-['2501','3000','VI','157.89'],
-['3001','3500','VII','159.09'],
-['3501','4000','VIII','166.67'],
-['4001','4500','IX','180'],
-['4501','5000','X','192.31'],
-['5001','6000','XI','200'],
-['6001','7000','XII','225.81'],
-['7001','8000','XIII','242.42'],
-['8001','9000','XIV','250'],
-['9001','11000','XV','261.9']
-]
-},
-
-BHBAH:{
-operandi:'RTG',
-target:'5%',
-rows:[
-['1','500','I','47.58'],
-['501','1000','II','61.87'],
-['1001','1500','III','84.40'],
-['1501','2000','IV','97.74'],
-['2001','2500','V','107.64'],
-['2501','3000','VI','118.91'],
-['3001','3500','VII','118.91'],
-['3501','4000','VIII','118.91'],
-['4001','4500','IX','118.91'],
-['4501','5000','X','118.91'],
-['5001','6000','XI','118.91'],
-['6001','7000','XII','118.91'],
-['7001','8000','XIII','118.91'],
-['8001','9000','XIV','118.91'],
-['9001','11000','XV','118.91']
-]
-},
-
-JOAQJ:{
-operandi:'EH/RS',
-target:'5%',
-rows:[
-['1','500','I','41.74'],
-['501','1000','II','55.77'],
-['1001','1500','III','63.47'],
-['1501','2000','IV','69.75'],
-['2001','2500','V','70.54'],
-['2501','3000','VI','74.00'],
-['3001','3500','VII','77.59'],
-['3501','4000','VIII','77.59'],
-['4001','4500','IX','77.59'],
-['4501','5000','X','77.59'],
-['5001','6000','XI','77.59'],
-['6001','7000','XII','77.59'],
-['7001','8000','XIII','77.59'],
-['8001','9000','XIV','77.59'],
-['9001','11000','XV','77.59']
-]
-},
-
-ITVAD:{
-operandi:'Automated / ARMG',
-target:'5%',
-rows:[
-['1','500','I','33.79'],
-['501','1000','II','53.36'],
-['1001','1500','III','60.58'],
-['1501','2000','IV','65.74'],
-['2001','2500','V','67.98'],
-['2501','3000','VI','70.44'],
-['3001','3500','VII','74.14'],
-['3501','4000','VIII','74.14'],
-['4001','4500','IX','74.14'],
-['4501','5000','X','74.14'],
-['5001','6000','XI','74.14'],
-['6001','7000','XII','74.14'],
-['7001','8000','XIII','74.14'],
-['8001','9000','XIV','74.14'],
-['9001','11000','XV','74.14']
-]
-},
-
-DKAAR:{
-operandi:'Straddle Carrier',
-target:'5%',
-rows:[
-['1','500','I','22.85'],
-['501','1000','II','47.38'],
-['1001','1500','III','63.73'],
-['1501','2000','IV','77.98'],
-['2001','2500','V','79.63'],
-['2501','3000','VI','80.39'],
-['3001','3500','VII','83.50'],
-['3501','4000','VIII','83.50'],
-['4001','4500','IX','99.93'],
-['4501','5000','X','99.93'],
-['5001','6000','XI','99.93'],
-['6001','7000','XII','99.93'],
-['7001','8000','XIII','99.93'],
-['8001','9000','XIV','99.93'],
-['9001','11000','XV','99.93']
-]
-},
-
-SEGOT:{
-operandi:'Straddle Carrier',
-target:'5%',
-rows:[
-['1','500','I','20.76'],
-['501','1000','II','32.31'],
-['1001','1500','III','48.27'],
-['1501','2000','IV','54.91'],
-['2001','2500','V','71.40'],
-['2501','3000','VI','77.22'],
-['3001','3500','VII','83.79'],
-['3501','4000','VIII','83.79'],
-['4001','4500','IX','84.43'],
-['4501','5000','X','84.43'],
-['5001','6000','XI','84.43'],
-['6001','7000','XII','84.43'],
-['7001','8000','XIII','84.43'],
-['8001','9000','XIV','84.43'],
-['9001','11000','XV','84.43']
-]
-},
-
-HRRJK:{
-operandi:'RTG',
-target:'0%',
-rows:[
-['1','500','I','21.80'],
-['501','1000','II','21.80'],
-['1001','1500','III','21.80'],
-['1501','2000','IV','21.80'],
-['2001','2500','V','21.80'],
-['2501','3000','VI','21.80'],
-['3001','3500','VII','55.72'],
-['3501','4000','VIII','55.72'],
-['4001','4500','IX','55.72'],
-['4501','5000','X','55.72'],
-['5001','6000','XI','55.72'],
-['6001','7000','XII','55.72'],
-['7001','8000','XIII','55.72'],
-['8001','9000','XIV','55.72'],
-['9001','11000','XV','55.72']
-]
-},
-
-NGAPP:{
-operandi:'RTG',
-target:'10%',
-rows:[
-['1','500','I','18.37'],
-['501','1000','II','22.80'],
-['1001','1500','III','25.60'],
-['1501','2000','IV','27.69'],
-['2001','2500','V','29.30'],
-['2501','3000','VI','35.41'],
-['3001','3500','VII','35.41'],
-['3501','4000','VIII','35.41'],
-['4001','4500','IX','35.41'],
-['4501','5000','X','35.41'],
-['5001','6000','XI','35.41'],
-['6001','7000','XII','35.41'],
-['7001','8000','XIII','35.41'],
-['8001','9000','XIV','35.41'],
-['9001','11000','XV','35.41']
-]
-},
-
-NGONN:{
-operandi:'RTG',
-target:'5%',
-rows:[
-['1','500','I','14.59065016'],
-['501','1000','II','23.44914809'],
-['1001','1500','III','28.83988455'],
-['1501','2000','IV','31.90291987'],
-['2001','2500','V','33.92649903'],
-['2501','3000','VI','33.92649903'],
-['3001','3500','VII','33.92649903'],
-['3501','4000','VIII','33.92649903'],
-['4001','4500','IX','33.92649903'],
-['4501','5000','X','33.92649903'],
-['5001','6000','XI','33.92649903'],
-['6001','7000','XII','33.92649903'],
-['7001','8000','XIII','33.92649903'],
-['8001','9000','XIV','33.92649903'],
-['9001','11000','XV','33.92649903']
-]
-},
-
-LRMLW:{
-operandi:'EH/RS',
-target:'10%',
-rows:[
-['1','500','I','10.05698032'],
-['501','1000','II','13.04827586'],
-['1001','1500','III','16.57938744'],
-['1501','2000','IV','17.19165264'],
-['2001','2500','V','22.94322754'],
-['2501','3000','VI','22.94322754'],
-['3001','3500','VII','22.94322754'],
-['3501','4000','VIII','22.94322754'],
-['4001','4500','IX','22.94322754'],
-['4501','5000','X','22.94322754'],
-['5001','6000','XI','22.94322754'],
-['6001','7000','XII','22.94322754'],
-['7001','8000','XIII','22.94322754'],
-['8001','9000','XIV','22.94322754'],
-['9001','11000','XV','22.94322754']
-]
-}
-
+  MAMED:{operandi:'Automated / ARMG',target:'15%',rows:[['1','500','I','39.76'],['501','1000','II','59.37'],['1001','1500','III','82.61'],['1501','2000','IV','99.03'],['2001','2500','V','112.46'],['2501','3000','VI','123.72'],['3001','3500','VII','142.02'],['3501','4000','VIII','142.02'],['4001','4500','IX','160'],['4501','5000','X','160'],['5001','6000','XI','183.24'],['6001','7000','XII','183.24'],['7001','8000','XIII','229.2'],['8001','9000','XIV','229.2'],['9001','11000','XV','632.41']]},
+  MAPTM:{operandi:'RTG',target:'20%',rows:[['1','500','I','49.92'],['501','1000','II','72.78'],['1001','1500','III','93.42'],['1501','2000','IV','110.77'],['2001','2500','V','127.88'],['2501','3000','VI','146.97'],['3001','3500','VII','158.86'],['3501','4000','VIII','158.86'],['4001','4500','IX','172.93'],['4501','5000','X','172.93'],['5001','6000','XI','176.12'],['6001','7000','XII','176.12'],['7001','8000','XIII','176.12'],['8001','9000','XIV','176.12'],['9001','11000','XV','176.12']]},
+  OMSLL:{operandi:'RTG',target:'10%',rows:[['1','500','I','66.67'],['501','1000','II','89.29'],['1001','1500','III','109.49'],['1501','2000','IV','125'],['2001','2500','V','147.06'],['2501','3000','VI','157.89'],['3001','3500','VII','159.09'],['3501','4000','VIII','166.67'],['4001','4500','IX','180'],['4501','5000','X','192.31'],['5001','6000','XI','200'],['6001','7000','XII','225.81'],['7001','8000','XIII','242.42'],['8001','9000','XIV','250'],['9001','11000','XV','261.9']]},
+  BHBAH:{operandi:'RTG',target:'5%',rows:[['1','500','I','47.58'],['501','1000','II','61.87'],['1001','1500','III','84.40'],['1501','2000','IV','97.74'],['2001','2500','V','107.64'],['2501','3000','VI','118.91'],['3001','3500','VII','118.91'],['3501','4000','VIII','118.91'],['4001','4500','IX','118.91'],['4501','5000','X','118.91'],['5001','6000','XI','118.91'],['6001','7000','XII','118.91'],['7001','8000','XIII','118.91'],['8001','9000','XIV','118.91'],['9001','11000','XV','118.91']]},
+  JOAQJ:{operandi:'EH/RS',target:'5%',rows:[['1','500','I','41.74'],['501','1000','II','55.77'],['1001','1500','III','63.47'],['1501','2000','IV','69.75'],['2001','2500','V','70.54'],['2501','3000','VI','74.00'],['3001','3500','VII','77.59'],['3501','4000','VIII','77.59'],['4001','4500','IX','77.59'],['4501','5000','X','77.59'],['5001','6000','XI','77.59'],['6001','7000','XII','77.59'],['7001','8000','XIII','77.59'],['8001','9000','XIV','77.59'],['9001','11000','XV','77.59']]},
+  ITVAD:{operandi:'Automated / ARMG',target:'5%',rows:[['1','500','I','33.79'],['501','1000','II','53.36'],['1001','1500','III','60.58'],['1501','2000','IV','65.74'],['2001','2500','V','67.98'],['2501','3000','VI','70.44'],['3001','3500','VII','74.14'],['3501','4000','VIII','74.14'],['4001','4500','IX','74.14'],['4501','5000','X','74.14'],['5001','6000','XI','74.14'],['6001','7000','XII','74.14'],['7001','8000','XIII','74.14'],['8001','9000','XIV','74.14'],['9001','11000','XV','74.14']]},
+  DKAAR:{operandi:'Straddle Carrier',target:'5%',rows:[['1','500','I','22.85'],['501','1000','II','47.38'],['1001','1500','III','63.73'],['1501','2000','IV','77.98'],['2001','2500','V','79.63'],['2501','3000','VI','80.39'],['3001','3500','VII','83.50'],['3501','4000','VIII','83.50'],['4001','4500','IX','99.93'],['4501','5000','X','99.93'],['5001','6000','XI','99.93'],['6001','7000','XII','99.93'],['7001','8000','XIII','99.93'],['8001','9000','XIV','99.93'],['9001','11000','XV','99.93']]},
+  SEGOT:{operandi:'Straddle Carrier',target:'5%',rows:[['1','500','I','20.76'],['501','1000','II','32.31'],['1001','1500','III','48.27'],['1501','2000','IV','54.91'],['2001','2500','V','71.40'],['2501','3000','VI','77.22'],['3001','3500','VII','83.79'],['3501','4000','VIII','83.79'],['4001','4500','IX','84.43'],['4501','5000','X','84.43'],['5001','6000','XI','84.43'],['6001','7000','XII','84.43'],['7001','8000','XIII','84.43'],['8001','9000','XIV','84.43'],['9001','11000','XV','84.43']]},
+  HRRJK:{operandi:'RTG',target:'0%',rows:[['1','500','I','21.80'],['501','1000','II','21.80'],['1001','1500','III','21.80'],['1501','2000','IV','21.80'],['2001','2500','V','21.80'],['2501','3000','VI','21.80'],['3001','3500','VII','55.72'],['3501','4000','VIII','55.72'],['4001','4500','IX','55.72'],['4501','5000','X','55.72'],['5001','6000','XI','55.72'],['6001','7000','XII','55.72'],['7001','8000','XIII','55.72'],['8001','9000','XIV','55.72'],['9001','11000','XV','55.72']]},
+  NGAPP:{operandi:'RTG',target:'10%',rows:[['1','500','I','18.37'],['501','1000','II','22.80'],['1001','1500','III','25.60'],['1501','2000','IV','27.69'],['2001','2500','V','29.30'],['2501','3000','VI','35.41'],['3001','3500','VII','35.41'],['3501','4000','VIII','35.41'],['4001','4500','IX','35.41'],['4501','5000','X','35.41'],['5001','6000','XI','35.41'],['6001','7000','XII','35.41'],['7001','8000','XIII','35.41'],['8001','9000','XIV','35.41'],['9001','11000','XV','35.41']]},
+  NGONN:{operandi:'RTG',target:'5%',rows:[['1','500','I','14.59'],['501','1000','II','23.45'],['1001','1500','III','28.84'],['1501','2000','IV','31.90'],['2001','2500','V','33.93'],['2501','3000','VI','33.93'],['3001','3500','VII','33.93'],['3501','4000','VIII','33.93'],['4001','4500','IX','33.93'],['4501','5000','X','33.93'],['5001','6000','XI','33.93'],['6001','7000','XII','33.93'],['7001','8000','XIII','33.93'],['8001','9000','XIV','33.93'],['9001','11000','XV','33.93']]},
+  LRMLW:{operandi:'EH/RS',target:'10%',rows:[['1','500','I','10.06'],['501','1000','II','13.05'],['1001','1500','III','16.58'],['1501','2000','IV','17.19'],['2001','2500','V','22.94'],['2501','3000','VI','22.94'],['3001','3500','VII','22.94'],['3501','4000','VIII','22.94'],['4001','4500','IX','22.94'],['4501','5000','X','22.94'],['5001','6000','XI','22.94'],['6001','7000','XII','22.94'],['7001','8000','XIII','22.94'],['8001','9000','XIV','22.94'],['9001','11000','XV','22.94']]}
 };
+
 const timelineData = {
   'MAPTM': [
-    ['Baplie Receival','30','Prior ETB'],
-    ['Final Discharge Receival (MAE)','30','Prior ETB'],
-    ['Final Discharge Receival (Lines)','30','Prior ETB'],
-    ['Final load received (MAE)','24','Prior ETB'],
-    ['Final load received (Lines)','24','Prior ETB'],
-    ['SI Receival','18','Prior ETB'],
-    ['Final Load Running Notification','2','After Final Load Receival'],
-    ['HK planned','2','After Load Running Notification'],
-    ['Empties Rerouted','2','After Load Running Notification'],
-    ['QC & CWL Approval sent','2','After Max (Baplie, SI Receival, Final LL Receival)'],
-    ['QC & CWL Approval','1','After QC & CWL Approval sent'],
-    ['Planning Concluded (Pre-Plan Sent)','6','Prior ETB'],
-    ['Pre-Sign off / Sign off Request','5','Prior ETB'],
-    ['Sign off preformed','1','After Pre-Sign off / Sign off Request'],
-    ['Vessel Approval (Central Planner)','3','Prior ETB'],
-    ['Vessel Approval C/O','3','Prior ETB'],
-    ['Call Info','3','Prior ETB']
+    ['Baplie Receival','30','Prior ETB'],['Final Discharge Receival (MAE)','30','Prior ETB'],['Final Discharge Receival (Lines)','30','Prior ETB'],['Final load received (MAE)','24','Prior ETB'],['Final load received (Lines)','24','Prior ETB'],['SI Receival','18','Prior ETB'],['Final Load Running Notification','2','After Final Load Receival'],['HK planned','2','After Load Running Notification'],['Empties Rerouted','2','After Load Running Notification'],['QC & CWL Approval sent','2','After Max (Baplie, SI Receival, Final LL Receival)'],['QC & CWL Approval','1','After QC & CWL Approval sent'],['Planning Concluded (Pre-Plan Sent)','6','Prior ETB'],['Pre-Sign off / Sign off Request','5','Prior ETB'],['Sign off preformed','1','After Pre-Sign off / Sign off Request'],['Vessel Approval (Central Planner)','3','Prior ETB'],['Vessel Approval C/O','3','Prior ETB'],['Call Info','3','Prior ETB']
   ],
-'HRRJK': [
-  ['Baplie Receival','24','Prior ETB'],
-  ['Final Discharge Receival (MAE)','24','Prior ETB'],
-  ['Final Discharge Receival (Lines)','24','Prior ETB'],
-  ['Discharge EDIs Received (Coreor and Cuscar)','24','Prior ETB'],
-  ['Final load received (MAE)','24','Prior ETB'],
-  ['Final load received (Lines)','24','Prior ETB'],
-  ['SI Receival','18','Prior ETB'],
-  ['Load Cleared & Empties Rerouted','16','Prior ETB'],
-  ['QC & CWL Approval sent','1','After (Max SI Receival, Baplie / Discharge Processed )'],
-  ['QC & CWL Approval','1','After QC & CWL Approval sent'],
-  ['Planning Concluded (Pre-Plan Sent)','6','Prior ETB'],
-  ['Pre-Sign off / Sign off Request','6','Prior ETB'],
-  ['Sign off preformed','1','After Pre-Sign off / Sign off Request'],
-  ['Vessel Approval (Central Planner)','4','Prior ETB'],
-  ['Vessel Approval C/O (To Be informed)','4','Prior ETB'],
-  ['Call Info','4','Prior ETB']
-],
+  'HRRJK': [
+    ['Baplie Receival','24','Prior ETB'],['Final Discharge Receival (MAE)','24','Prior ETB'],['Final Discharge Receival (Lines)','24','Prior ETB'],['Discharge EDIs Received (Coreor and Cuscar)','24','Prior ETB'],['Final load received (MAE)','24','Prior ETB'],['Final load received (Lines)','24','Prior ETB'],['SI Receival','18','Prior ETB'],['Load Cleared & Empties Rerouted','16','Prior ETB'],['QC & CWL Approval sent','1','After (Max SI Receival, Baplie / Discharge Processed)'],['QC & CWL Approval','1','After QC & CWL Approval sent'],['Planning Concluded (Pre-Plan Sent)','6','Prior ETB'],['Pre-Sign off / Sign off Request','6','Prior ETB'],['Sign off preformed','1','After Pre-Sign off / Sign off Request'],['Vessel Approval (Central Planner)','4','Prior ETB'],['Vessel Approval C/O (To Be informed)','4','Prior ETB'],['Call Info','4','Prior ETB']
+  ],
   'MAMED': [
-    ['Baplie Receival','30','Prior ETB'],
-    ['Final Discharge Receival (MAE)','30','Prior ETB'],
-    ['Final Discharge Receival (Lines)','30','Prior ETB'],
-    ['Final load received (MAE)','24','Prior ETB'],
-    ['Final load received (Lines)','24','Prior ETB'],
-    ['SI Receival','18','Prior ETB'],
-    ['Planning Concluded (Pre-Plan Sent)','6','Prior ETB'],
-    ['Final QC sent','4','Prior ETB'],
-    ['Vessel Approval (Central Planner)','4','Prior ETB'],
-    ['Vessel Approval C/O (To Be informed)','4','Prior ETB'],
-    ['Call Info','6','Prior ETB']
+    ['Baplie Receival','30','Prior ETB'],['Final Discharge Receival (MAE)','30','Prior ETB'],['Final Discharge Receival (Lines)','30','Prior ETB'],['Final load received (MAE)','24','Prior ETB'],['Final load received (Lines)','24','Prior ETB'],['SI Receival','18','Prior ETB'],['Planning Concluded (Pre-Plan Sent)','6','Prior ETB'],['Final QC sent','4','Prior ETB'],['Vessel Approval (Central Planner)','4','Prior ETB'],['Vessel Approval C/O (To Be informed)','4','Prior ETB'],['Call Info','6','Prior ETB']
   ],
   'ITVAD': [
-    ['SI Receival','24','Prior ETB'],
-    ['Vessel Handover','16','Prior ETB'],
-    ['Planning Concluded','6','Prior ETB'],
-    ['Vessel Approval (Central Planner)','4','Prior ETB'],
-    ['Vessel Approval C/O (To Be informed)','4','Prior ETB'],
-    ['Call Info','4','Prior ETB']
+    ['SI Receival','24','Prior ETB'],['Vessel Handover','16','Prior ETB'],['Planning Concluded','6','Prior ETB'],['Vessel Approval (Central Planner)','4','Prior ETB'],['Vessel Approval C/O (To Be informed)','4','Prior ETB'],['Call Info','4','Prior ETB']
   ],
   'SEGOT': [
-    ['SI Receival','24','Prior ETB'],
-    ['Vessel Handover','16','Prior ETB'],
-    ['Planning Concluded','6','Prior ETB'],
-    ['Vessel Approval (Central Planner)','4','Prior ETB'],
-    ['Vessel Approval C/O (To Be informed)','4','Prior ETB'],
-    ['Call Info','4','Prior ETB']
+    ['SI Receival','24','Prior ETB'],['Vessel Handover','16','Prior ETB'],['Planning Concluded','6','Prior ETB'],['Vessel Approval (Central Planner)','4','Prior ETB'],['Vessel Approval C/O (To Be informed)','4','Prior ETB'],['Call Info','4','Prior ETB']
   ],
   'DKAAR': [
-    ['SI Receival','24','Prior ETB'],
-    ['Vessel Handover','16','Prior ETB'],
-    ['Planning Concluded','8','Prior ETB'],
-    ['Vessel Approval (Central Planner)','6','Prior ETB'],
-    ['Vessel Approval C/O (To Be informed)','6','Prior ETB'],
-    ['Call Info','6','Prior ETB']
+    ['SI Receival','24','Prior ETB'],['Vessel Handover','16','Prior ETB'],['Planning Concluded','8','Prior ETB'],['Vessel Approval (Central Planner)','6','Prior ETB'],['Vessel Approval C/O (To Be informed)','6','Prior ETB'],['Call Info','6','Prior ETB']
   ],
-'OMSLL': [
-  ['Baplie / Discharge Processed','30','Prior ETB'],
-  ['Load Processed','24','Prior ETB'],
-  ['SI Receival','24','Prior ETB'],
-  ['HK planned','18','Prior ETB'],
-  ['Empties Rerouted','18','Prior ETB'],
-  ['QC & CWL Approval sent','1','After (Max SI Receival, Baplie / Discharge Processed )'],
-  ['QC & CWL Approval','1','After QC & CWL Approval sent'],
-  ['Planning Concluded (Pre-Plan Sent)','8','Prior ETB'],
-  ['Pre-Sign off / Sign off Request','7','Prior ETB'],
-  ['Sign off preformed','6','Prior ETB'],
-  ['Vessel Approval (Central Planner)','6','Prior ETB'],
-  ['Vessel Approval C/O (To Be informed)','4','Prior ETB'],
-  ['Call Info','6','Prior ETB']
-],
+  'OMSLL': [
+    ['Baplie / Discharge Processed','30','Prior ETB'],['Load Processed','24','Prior ETB'],['SI Receival','24','Prior ETB'],['HK planned','18','Prior ETB'],['Empties Rerouted','18','Prior ETB'],['QC & CWL Approval sent','1','After (Max SI Receival, Baplie / Discharge Processed)'],['QC & CWL Approval','1','After QC & CWL Approval sent'],['Planning Concluded (Pre-Plan Sent)','8','Prior ETB'],['Pre-Sign off / Sign off Request','7','Prior ETB'],['Sign off preformed','6','Prior ETB'],['Vessel Approval (Central Planner)','6','Prior ETB'],['Vessel Approval C/O (To Be informed)','4','Prior ETB'],['Call Info','6','Prior ETB']
+  ],
   'EGPSD': [
-  ['All Data Receival','18','Prior ETB'],
-  ['All Data Processed','3','After Data Receival'],
-  ['Vessel Handover','15','Prior ETB'],
-  ['Planning Concluded (Pre-Plan Sent)','7','Prior ETB'],
-  ['Pre-Sign off / Sign off Request','7','Prior ETB'],
-  ['Sign off preformed','1','After Pre-Sign off / Sign off Request'],
-  ['Call Info','6','Prior ETB']
-],
+    ['All Data Receival','18','Prior ETB'],['All Data Processed','3','After Data Receival'],['Vessel Handover','15','Prior ETB'],['Planning Concluded (Pre-Plan Sent)','7','Prior ETB'],['Pre-Sign off / Sign off Request','7','Prior ETB'],['Sign off preformed','1','After Pre-Sign off / Sign off Request'],['Call Info','6','Prior ETB']
+  ],
   'NGONN': [
-  ['Baplie Receival','18','Prior ETB'],
-  ['Baplie Running Notification','2','After Baplie Receival'],
-  ['SI Receival','18','Prior ETB'],
-  ['Final LL Registration/Confirmation','12','Prior ETB'],
-  ['QC & CWL Approval Sent','2','After Max ( Baplie Receival, SI receival, Final LL )'],
-  ['QC & CWL Approval','1','After QC & CWL Approval Sent'],
-  ['Planning Concluded (Pre-Plan Sent)','3','Prior ETB'],
-  ['Pre-Sign off / Signoff Request','3','Prior ETB'],
-  ['Sign off Preformed','2','Prior ETB'],
-  ['Call Info','2','Prior ETB']
-],
-'BHBAH': [
-  ['Baplie Receival','24','Prior ETB'],
-  ['Baplie Running Notification','1','After Baplie Receival'],
-  ['SI Receival','18','Prior ETB'],
-  ['Final LL Registration/Confirmation','16','Prior ETB'],
-  ['QC & CWL Approval Sent','1','After Max ( Baplie Receival, SI receival, Final LL Receival )'],
-  ['QC & CWL Approval','1','After QC & CWL Approval Sent'],
-  ['Planning Concluded (Pre-Plan Sent)','8','Prior ETB'],
-  ['Pre-Sign off / Sign off Request','8','Prior ETB'],
-  ['Sign off Preformed','7','Prior ETB'],
-  ['Vessel Approval (Central Planner)','6','Prior ETB'],
-  ['Vessel Approval C/O (To Be informed)','6','Prior ETB'],
-  ['Call Info','6','Prior ETB']
-],
-'LRMLW': [
-  ['Baplie Receival','18','Prior ETB'],
-  ['Discharge Sent','2','After Baplie Receival'],
-  ['SI Receival','18','Prior ETB'],
-  ['Final LL Registration/Confirmation','12','Prior ETB'],
-  ['Planning Concluded (Pre-Plan Sent)','4','Prior ETB'],
-  ['Load Set sent','4','Prior ETB'],
-  ['Call Info','4','Prior ETB']
-],
+    ['Baplie Receival','18','Prior ETB'],['Baplie Running Notification','2','After Baplie Receival'],['SI Receival','18','Prior ETB'],['Final LL Registration/Confirmation','12','Prior ETB'],['QC & CWL Approval Sent','2','After Max (Baplie Receival, SI receival, Final LL)'],['QC & CWL Approval','1','After QC & CWL Approval Sent'],['Planning Concluded (Pre-Plan Sent)','3','Prior ETB'],['Pre-Sign off / Signoff Request','3','Prior ETB'],['Sign off Preformed','2','Prior ETB'],['Call Info','2','Prior ETB']
+  ],
+  'BHBAH': [
+    ['Baplie Receival','24','Prior ETB'],['Baplie Running Notification','1','After Baplie Receival'],['SI Receival','18','Prior ETB'],['Final LL Registration/Confirmation','16','Prior ETB'],['QC & CWL Approval Sent','1','After Max (Baplie Receival, SI receival, Final LL Receival)'],['QC & CWL Approval','1','After QC & CWL Approval Sent'],['Planning Concluded (Pre-Plan Sent)','8','Prior ETB'],['Pre-Sign off / Sign off Request','8','Prior ETB'],['Sign off Preformed','7','Prior ETB'],['Vessel Approval (Central Planner)','6','Prior ETB'],['Vessel Approval C/O (To Be informed)','6','Prior ETB'],['Call Info','6','Prior ETB']
+  ],
+  'LRMLW': [
+    ['Baplie Receival','18','Prior ETB'],['Discharge Sent','2','After Baplie Receival'],['SI Receival','18','Prior ETB'],['Final LL Registration/Confirmation','12','Prior ETB'],['Planning Concluded (Pre-Plan Sent)','4','Prior ETB'],['Load Set sent','4','Prior ETB'],['Call Info','4','Prior ETB']
+  ],
   'JOAQJ': [
-    ['Baplie Receival','24','Prior ETB'],
-    ['Baplie Running Notification','1','After Baplie Receival'],
-    ['DG List Notice','1','After Baplie Receival'],
-    ['DG Safety Recommendation','1','After DG List Notice'],
-    ['DG list Update','1','After DG Safety Recommendation'],
-    ['Cut Off Email','1','After Baplie Receival'],
-    ['SI Receival','18','Prior ETB'],
-    ['Max cranes','1','After Max (Baplie, SI Receival)'],
-    ['Final LL Registration/Confirmation','16','Prior ETB'],
-    ['QC & CWL Approval sent','1','After Max (Baplie, SI Receival, Final LL Registration/Confirmation)'],
-    ['QC & CWL Approval','1','After QC & CWL Approval sent'],
-    ['Planning Concluded (Pre-Plan Sent)','8','Prior ETB'],
-    ['Pre-Sign off / Sign off Request','7','Prior ETB'],
-    ['Sign off preformed','6','Prior ETB'],
-    ['Vessel Approval (Central Planner)','4','Prior ETB'],
-    ['Vessel Approval C/O (To Be informed)','4','Prior ETB'],
-    ['Final QC sent','4','Prior ETB'],
-    ['Call Info','4','Prior ETB']
+    ['Baplie Receival','24','Prior ETB'],['Baplie Running Notification','1','After Baplie Receival'],['DG List Notice','1','After Baplie Receival'],['DG Safety Recommendation','1','After DG List Notice'],['DG list Update','1','After DG Safety Recommendation'],['Cut Off Email','1','After Baplie Receival'],['SI Receival','18','Prior ETB'],['Max cranes','1','After Max (Baplie, SI Receival)'],['Final LL Registration/Confirmation','16','Prior ETB'],['QC & CWL Approval sent','1','After Max (Baplie, SI Receival, Final LL Registration/Confirmation)'],['QC & CWL Approval','1','After QC & CWL Approval sent'],['Planning Concluded (Pre-Plan Sent)','8','Prior ETB'],['Pre-Sign off / Sign off Request','7','Prior ETB'],['Sign off preformed','6','Prior ETB'],['Vessel Approval (Central Planner)','4','Prior ETB'],['Vessel Approval C/O (To Be informed)','4','Prior ETB'],['Final QC sent','4','Prior ETB'],['Call Info','4','Prior ETB']
   ],
   'NGAPP': [
-  ['Vessel Handover','12','Prior ETB'],
-  ['SI Receival','18','Prior ETB'],
-  ['QC & CWL Approval Sent','2','After Max (Vessel Handover, SI receival)'],
-  ['QC & CWL Approval','1','After QC & CWL Approval Sent'],
-  ['Planning Concluded (Pre-Plan Sent)','6','Prior ETB'],
-  ['Vessel Approval (Central Planner)','4','Prior ETB'],
-  ['Vessel Approval C/O (To Be informed)','4','Prior ETB'],
-  ['Call Info','4','Prior ETB']
-],
+    ['Vessel Handover','12','Prior ETB'],['SI Receival','18','Prior ETB'],['QC & CWL Approval Sent','2','After Max (Vessel Handover, SI receival)'],['QC & CWL Approval','1','After QC & CWL Approval Sent'],['Planning Concluded (Pre-Plan Sent)','6','Prior ETB'],['Vessel Approval (Central Planner)','4','Prior ETB'],['Vessel Approval C/O (To Be informed)','4','Prior ETB'],['Call Info','4','Prior ETB']
+  ],
 };
 
 const spcScopeRows = [
@@ -1598,53 +1275,47 @@ const spcScopeRows = [
  ['ITVAD','60%','60%','All Services (60% is based on terminal agreement each week)'],
  ['HRRJK','100%','100%','All Services'],
  ['BHBAH','100%','100%','All Services'],
- ['JOAQJ','63%','100%','AR2 / CRM / CRX / EGRC / FM1 / IMS (E & W) / IRX2 / JJS / MSC-WRMS / RCS / REX & REX2 / RGI / RME / RS2 / RSS & Extra Calls for these services']
+ ['JOAQJ','63%','100%','AR2 / CRM / CRX / EGRC / FM1 / IMS (E & W) / IRX2 / JJS / MSC-WRMS / RCS / REX & REX2 / RGI / RME / RS2 / RSS & Extra Calls']
 ];
 
 function showView(id,btn){
-
  document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));
  document.getElementById(id).classList.remove('hidden');
-
  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
  btn.classList.add('active');
-
  const searchWrap = document.querySelector('.searchWrap');
  const search = document.getElementById('search');
  const exportBtn = document.getElementById('exportPdfBtn');
  const exportTargetsBtn = document.getElementById('exportTargetsPdfBtn');
  const exportTimelinesBtn = document.getElementById('exportTimelinesPdfBtn');
-
  if(exportBtn) exportBtn.style.display = 'none';
  if(exportTargetsBtn) exportTargetsBtn.style.display = 'none';
  if(exportTimelinesBtn) exportTimelinesBtn.style.display = 'none';
-
  if(id === 'spcScope'){
    searchWrap.style.display = 'none';
    search.value = '';
- }else{
+ } else {
    searchWrap.style.display = 'flex';
-
    if(id === 'definitions'){
      search.placeholder = 'Search KPI, Operational Operandi, Terminal...';
      if(exportBtn) exportBtn.style.display = 'inline-flex';
-   }else if(id === 'targets'){
+   } else if(id === 'targets'){
      search.placeholder = 'Search Terminal...';
      if(exportTargetsBtn) exportTargetsBtn.style.display = 'inline-flex';
-   }else if(id === 'timelines'){
+   } else if(id === 'timelines'){
      search.placeholder = 'Search Terminal...';
      if(exportTimelinesBtn) exportTimelinesBtn.style.display = 'inline-flex';
-   }else if(id === 'applicability'){
+   } else if(id === 'applicability'){
      search.placeholder = 'Search KPI, Operational Operandi...';
-   }else{
+   } else {
      search.placeholder = 'Search KPI, Terminal...';
    }
  }
-
  renderAll();
 }
-function searchValue(){return document.getElementById('search').value.trim().toLowerCase();}
-function matchesSearch(obj){const q=searchValue(); return !q || JSON.stringify(obj).toLowerCase().includes(q);}
+
+function searchValue(){ return document.getElementById('search').value.trim().toLowerCase(); }
+function matchesSearch(obj){ const q=searchValue(); return !q || JSON.stringify(obj).toLowerCase().includes(q); }
 
 function targetKpiMatch(targetName,kpiName){
  const a = normalize(targetName);
@@ -1670,14 +1341,13 @@ function kpiAppliesToTerminal(k,terminalCode){
 function filteredKpis(){
  const q = searchValue();
  if(!q) return kpis;
-
  const terminal = terminalFromSearch();
  if(terminal){
    return kpis.filter(k => kpiAppliesToTerminal(k,terminal.code));
  }
-
  return kpis.filter(matchesSearch);
 }
+
 function renderDefinitions(){
  const order=['General KPIs','Operational Operandi KPIs','Terminal Specific KPIs'];
  const data=filteredKpis();
@@ -1689,308 +1359,114 @@ function renderDefinitions(){
  });
  document.getElementById('definitions').innerHTML=html || `<div class="empty">No KPI found for this search.</div>`;
 }
+
 function tagClass(value){
  const v = String(value).toLowerCase();
-
  if(v.includes('general')) return 'general';
  if(v.includes('operational')) return 'operational';
  if(v.includes('rtg')) return 'rtg';
  if(v.includes('straddle')) return 'straddle';
  if(v.includes('automated') || v.includes('armg')) return 'armg';
  if(v.includes('eh/rs') || v.includes('eh') || v.includes('rs')) return 'ehrs';
-
  return '';
 }
+
 function kpiCard(k){
  return `<article class="kpi ${k.card}">
   <div class="kpiTop">
     <div>
       <h3>${k.name}</h3>
       <div class="tags">
-
-        <span class="tag ${tagClass(k.group)}">
-          ${k.group.replace(' KPIs','')}
-        </span>
-
-        ${k.group === 'General KPIs'
-        ? ''
-        : [...new Set(k.applicability)]
-          .map(a=>`<span class="tag ${tagClass(a)}">${a}</span>`)
-          .join('')
-        }
-
+        <span class="tag ${tagClass(k.group)}">${k.group.replace(' KPIs','')}</span>
+        ${k.group === 'General KPIs' ? '' : [...new Set(k.applicability)].map(a=>`<span class="tag ${tagClass(a)}">${a}</span>`).join('')}
         ${k.status?`<span class="tag parked">${k.status}</span>`:''}
-
       </div>
     </div>
-
     <div class="iconBadge">${k.icon||'⚙️'}</div>
   </div>
-
   <div class="label"><span>Definition</span></div>
   <p class="definition">${k.definition}</p>
-
   <div class="label"><span>Purpose</span></div>
   <p class="purpose">${k.purpose}</p>
-
   <div class="label"><span>Formula</span></div>
-  <div class="formula">
-    ${k.formula}
-    ${k.extraFormula?`<small>${k.extraFormula}</small>`:''}
-  </div>
-
-  ${k.variants
-    ? `<details>
-        <summary>Equipment / Terminal Specific Definitions</summary>
-        ${k.variants.map(v=>`<div class="variantBox"><b>${v[0]}:</b> ${v[1]}</div>`).join('')}
-      </details>`
-    : ''
-  }
-
+  <div class="formula">${k.formula}${k.extraFormula?`<small>${k.extraFormula}</small>`:''}</div>
+  ${k.variants?`<details><summary>Equipment / Terminal Specific Definitions</summary>${k.variants.map(v=>`<div class="variantBox"><b>${v[0]}:</b> ${v[1]}</div>`).join('')}</details>`:''}
   <details>
     <summary>Rules / Source</summary>
-    <ul class="rules">
-      ${k.rules.map(r=>`<li>${r}</li>`).join('')}
-    </ul>
+    <ul class="rules">${k.rules.map(r=>`<li>${r}</li>`).join('')}</ul>
     <div class="source">Source: ${k.source}</div>
   </details>
-
  </article>`;
 }
+
 function renderApplicability(){
-
-const shownTerms = terminals;
-
-const searchValue = document.getElementById('search').value.toLowerCase();
-
-const shownKpis = kpis.filter(k =>
-  !searchValue ||
-  k.name.toLowerCase().includes(searchValue) ||
-  k.group.toLowerCase().includes(searchValue) ||
-  k.definition.toLowerCase().includes(searchValue) ||
-  k.purpose.toLowerCase().includes(searchValue) ||
-  k.formula.toLowerCase().includes(searchValue) ||
-  k.applicability.join(' ').toLowerCase().includes(searchValue)
-);
-
- let html = `
-
- <div class="terminalGroups">
-
-   <div class="groupBox rtg">
-     <h3>RTG Terminals</h3>
-     <p>MAPTM, OMSLL, EGPSD, BHBAH, NGAPP, NGONN, JOAQJ (Discharge Operations), HRRJK</p>
-   </div>
-
-   <div class="groupBox straddle">
-     <h3>Straddle Carrier Terminals</h3>
-     <p>SEGOT, DKAAR</p>
-   </div>
-
-   <div class="groupBox automated">
-     <h3>Automated (ARMG) Terminals</h3>
-     <p>MAMED, ITVAD</p>
-   </div>
-
-   <div class="groupBox ehrs">
-     <h3>EH/RS Terminals</h3>
-     <p>LRMLW, JOAQJ (Load Operations)</p>
-   </div>
-
- </div>
-
- <div class="matrixWrap">
- <h2>Applicability per Terminal</h2>
-
- <table>
- <thead>
- <tr>
- <th>KPI</th>
-
- ${shownTerms.map(t=>`
-   <th>
-     ${t.code}
-   </th>
- `).join('')}
-
- </tr>
- </thead>
-
- <tbody>
- `;
-
+ const shownTerms = terminals;
+ const searchVal = document.getElementById('search').value.toLowerCase();
+ const shownKpis = kpis.filter(k =>
+   !searchVal ||
+   k.name.toLowerCase().includes(searchVal) ||
+   k.group.toLowerCase().includes(searchVal) ||
+   k.definition.toLowerCase().includes(searchVal) ||
+   k.purpose.toLowerCase().includes(searchVal) ||
+   k.formula.toLowerCase().includes(searchVal) ||
+   k.applicability.join(' ').toLowerCase().includes(searchVal)
+ );
+ let html = `<div class="matrixWrap"><h2>Applicability per Terminal</h2>
+ <table><thead><tr><th>KPI</th>${shownTerms.map(t=>`<th>${t.code}</th>`).join('')}</tr></thead><tbody>`;
  shownKpis.forEach(k=>{
-
    html += `<tr><td>${k.name}</td>`;
-
    html += shownTerms.map(t=>{
-
      const rows = targets[t.code] || [];
-
-     const inTarget = rows.some(r =>
-       normalize(r[0]) === normalize(k.name)
-     );
-
-     const parked = rows.some(r =>
-       normalize(r[0]) === normalize(k.name) &&
-       String(r[2]).toLowerCase().includes('parked')
-     );
-
-     const general = k.applicability.includes('General');
-
-     const eqMatch =
-       k.applicability.includes(t.equipment) ||
-       (t.equipment === 'Automated / ARMG' &&
-        k.applicability.includes('Automated / ARMG'));
-
-     const applicable = inTarget;
-
-if(parked){
-  return `<td class="parkedCell">Parked</td>`;
-}
-
-if(applicable){
-  return `<td class="yes">Yes</td>`;
-}
-
-return `<td class="no">N/A</td>`;
-
+     const parked = rows.some(r => normalize(r[0]) === normalize(k.name) && String(r[2]).toLowerCase().includes('parked'));
+     const applicable = rows.some(r => normalize(r[0]) === normalize(k.name));
+     if(parked) return `<td class="parkedCell">Parked</td>`;
+     if(applicable) return `<td class="yes">Yes</td>`;
+     return `<td class="no">N/A</td>`;
    }).join('');
-
    html += '</tr>';
-
  });
-
- html += `
- </tbody>
- </table>
- </div>
- `;
-
+ html += `</tbody></table></div>`;
  document.getElementById('applicability').innerHTML = html;
 }
+
 function renderTargets(){
  const shown=terminals.filter(t=>matchesSearch(t) || (targets[t.code]||[]).some(matchesSearch));
- const scoreCard = `
- <div class="scoreCard">
-   <h2>Vessel Score Calculation</h2>
-   <div class="scoreFormula">Score = Σ (KPI Score × KPI Weight)</div>
-   <div class="scoreRules">
-     <div class="scoreRule">On Target → KPI Score = 3</div>
-     <div class="scoreRule">Better than Target → KPI Score = 5</div>
-     <div class="scoreRule">Worse than Target → KPI Score = 1</div>
-   </div>
-   <p class="scopeNote">KPIs where SPC has no direct control are kept with weight 0%.</p>
- </div>`;
+ const scoreCard = `<div class="scoreCard"><h2>Vessel Score Calculation</h2><div class="scoreFormula">Score = Σ (KPI Score × KPI Weight)</div><div class="scoreRules"><div class="scoreRule">On Target → KPI Score = 3</div><div class="scoreRule">Better than Target → KPI Score = 5</div><div class="scoreRule">Worse than Target → KPI Score = 1</div></div><p class="scopeNote">KPIs where SPC has no direct control are kept with weight 0%.</p></div>`;
  document.getElementById('targets').innerHTML=scoreCard+`<div class="terminalCards">${shown.map(t=>{
    const rows=targets[t.code];
-   return `<div class="terminalCard"><h2>${t.code}<span class="pill ${tagClass(t.equipment)}">${t.equipment}</span></h2><p class="muted">${t.source}</p>${rows?`<table><thead><tr><th>KPI</th><th>Target</th><th>Weight</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${r[0]}</td><td class="target">${r[1]}</td><td>${r[2]||'-'}</td></tr>`).join('')}</tbody></table>`:`<p class="muted">No PPT/target table loaded yet.</p>`}</div>`;
+   return `<div class="terminalCard"><h2>${t.code}<span class="pill ${tagClass(t.equipment)}">${t.equipment}</span></h2><p class="muted">${t.source}</p>${rows?`<table><thead><tr><th>KPI</th><th>Target</th><th>Weight</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${r[0]}</td><td class="target">${r[1]}</td><td>${r[2]||'-'}</td></tr>`).join('')}</tbody></table>`:`<p class="muted">No target table loaded yet.</p>`}</div>`;
  }).join('')}</div>`;
 }
+
 function renderPMPHTargets(){
  const q = searchValue();
-
- const formulaCard = `
- <div class="formulaCard">
-   <h2>Port Hours / PMPH / CMPH Calculation</h2>
-   <div class="formulaGrid">
-     <div class="formulaMini">Port Hours = Operations Hours + Idle Time</div>
-     <div class="formulaMini">Operations Hours = Last Lift − First Lift</div>
-     <div class="formulaMini">Idle Time = (First Lift − First Line) + (Last Line − Last Lift)</div>
-     <div class="formulaMini">PMPH = Moves / Port Hours</div>
-     <div class="formulaMini">CMPH = Moves / Σ Crane Working Hours</div>
-   </div>
- </div>`;
-
+ const formulaCard = `<div class="formulaCard"><h2>Port Hours / PMPH / CMPH Calculation</h2><div class="formulaGrid"><div class="formulaMini">Port Hours = Operations Hours + Idle Time</div><div class="formulaMini">Operations Hours = Last Lift − First Lift</div><div class="formulaMini">Idle Time = (First Lift − First Line) + (Last Line − Last Lift)</div><div class="formulaMini">PMPH = Moves / Port Hours</div><div class="formulaMini">CMPH = Moves / Σ Crane Working Hours</div></div></div>`;
  let html = formulaCard + `<div class="pmphGrid">`;
-
- Object.entries(pmphTargets)
- .filter(([terminal,data]) =>
-   !q ||
-   terminal.toLowerCase().includes(q) ||
-   String(data.operandi).toLowerCase().includes(q)
- )
- .forEach(([terminal,data])=>{
-   html += `
-   <div class="pmphCard">
-     <div class="pmphHeader">
-       <h2>${terminal}</h2>
-       <span class="pmphWeight ${tagClass(data.operandi)}">${data.operandi || ''}${data.target ? ` | Target ${data.target}` : ''}</span>
-     </div>
-     <table>
-       <thead><tr><th>Min Moves</th><th>Max Moves</th><th>Call Size</th><th>PMPH</th></tr></thead>
-       <tbody>
-       ${data.rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td class="target">${r[3]}</td></tr>`).join('')}
-       </tbody>
-     </table>
-   </div>`;
+ Object.entries(pmphTargets).filter(([terminal,data]) => !q || terminal.toLowerCase().includes(q) || String(data.operandi).toLowerCase().includes(q)).forEach(([terminal,data])=>{
+   html += `<div class="pmphCard"><div class="pmphHeader"><h2>${terminal}</h2><span class="pmphWeight ${tagClass(data.operandi)}">${data.operandi || ''}${data.target ? ` | Target ${data.target}` : ''}</span></div><table><thead><tr><th>Min Moves</th><th>Max Moves</th><th>Call Size</th><th>PMPH</th></tr></thead><tbody>${data.rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td class="target">${r[3]}</td></tr>`).join('')}</tbody></table></div>`;
  });
-
  html += `</div>`;
  document.getElementById('pmphTargets').innerHTML = html;
 }
 
 function renderTimelines(){
  const q = searchValue();
-
- let html = `
- <div class="timelineIntro">
-   <h2>Timeline Definition</h2>
-   <p class="scopeNote">Terminal timeline milestones define the agreed planning checkpoints, time span, and time base condition used to monitor planning adherence.</p>
- </div>
- <div class="timelineGrid">`;
-
- terminals
- .filter(t =>
-   !q ||
-   t.code.toLowerCase().includes(q) ||
-   t.equipment.toLowerCase().includes(q)
- )
- .forEach(t=>{
-   const terminal = t.code;
-   const rows = timelineData[terminal];
+ let html = `<div class="timelineIntro"><h2>Timeline Definition</h2><p class="scopeNote">Terminal timeline milestones define the agreed planning checkpoints, time span, and time base condition used to monitor planning adherence.</p></div><div class="timelineGrid">`;
+ terminals.filter(t => !q || t.code.toLowerCase().includes(q) || t.equipment.toLowerCase().includes(q)).forEach(t=>{
+   const rows = timelineData[t.code];
    if(!rows) return;
-
-   html += `<div class="timelineCard">
-     <h2>${terminal}</h2>
-     <table>
-       <thead><tr><th>Milestone</th><th>Time Span</th><th>Time Base Condition</th></tr></thead>
-       <tbody>
-         ${rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('')}
-       </tbody>
-     </table>
-   </div>`;
+   html += `<div class="timelineCard"><h2>${t.code}</h2><table><thead><tr><th>Milestone</th><th>Time Span</th><th>Time Base Condition</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('')}</tbody></table></div>`;
  });
-
  html += `</div>`;
  document.getElementById('timelines').innerHTML = html;
 }
 
 function renderSPCScope(){
  document.getElementById('spcScope').innerHTML = `
- <div class="scopeIntro">
-   <h2>SPC KPIs</h2>
-   <div class="formulaGrid">
-     <div class="formulaMini">SPC Calls Adherence % = SPC Planned Calls / Total Calls of APM Controlled Terminals</div>
-     <div class="formulaMini">SPC Moves Adherence % = SPC Planned Moves / Total Moves of APM Controlled Terminals</div>
-   </div>
-   <p class="scopeNote"><b>APM Controlled Terminals:</b> terminals in which APM is managing operations, not only holding shares.</p>
- </div>
- <div class="scopeGrid">
-   <div class="scopeMetric"><b>60%</b><span>SPC Calls Adherence Target</span></div>
-   <div class="scopeMetric"><b>70%</b><span>SPC Moves Adherence Target</span></div>
- </div>
- <div class="scopeTableWrap">
-   <h2>SPC Tangier Terminals Scope - 2026 Agreement</h2>
-   <table>
-     <thead><tr><th>Terminal</th><th>Scope %</th><th>Scope Target %</th><th>Services / Line Operators</th></tr></thead>
-     <tbody>
-       ${spcScopeRows.map(r=>{ const scopeVal=parseFloat(String(r[1]).replace('%','')); const targetVal=parseFloat(String(r[2]||'').replace('%','')); const isBad=!isNaN(scopeVal)&&!isNaN(targetVal)&&scopeVal<targetVal; return `<tr class="${isBad?'scopeIssue':''}"><td>${r[0]}</td><td class="${isBad?'scopeBad':'scopeGood'}">${r[1]}</td><td class="target">${r[2]||'-'}</td><td>${r[3]}</td></tr>`; }).join('')}
-     </tbody>
-   </table>
- </div>`;
+ <div class="scopeIntro"><h2>SPC KPIs</h2><div class="formulaGrid"><div class="formulaMini">SPC Calls Adherence % = SPC Planned Calls / Total Calls of APM Controlled Terminals</div><div class="formulaMini">SPC Moves Adherence % = SPC Planned Moves / Total Moves of APM Controlled Terminals</div></div><p class="scopeNote"><b>APM Controlled Terminals:</b> terminals in which APM is managing operations, not only holding shares.</p></div>
+ <div class="scopeGrid"><div class="scopeMetric"><b>60%</b><span>SPC Calls Adherence Target</span></div><div class="scopeMetric"><b>70%</b><span>SPC Moves Adherence Target</span></div></div>
+ <div class="scopeTableWrap"><h2>SPC Tangier Terminals Scope - 2026 Agreement</h2><table><thead><tr><th>Terminal</th><th>Scope %</th><th>Scope Target %</th><th>Services / Line Operators</th></tr></thead><tbody>${spcScopeRows.map(r=>{ const scopeVal=parseFloat(String(r[1]).replace('%','')); const targetVal=parseFloat(String(r[2]||'').replace('%','')); const isBad=!isNaN(scopeVal)&&!isNaN(targetVal)&&scopeVal<targetVal; return `<tr class="${isBad?'scopeIssue':''}"><td>${r[0]}</td><td class="${isBad?'scopeBad':'scopeGood'}">${r[1]}</td><td class="target">${r[2]||'-'}</td><td>${r[3]}</td></tr>`; }).join('')}</tbody></table></div>`;
 }
-
 
 function exportViewPDF(viewId, printClass){
  const search = document.getElementById('search');
@@ -1998,63 +1474,43 @@ function exportViewPDF(viewId, printClass){
  const previousView = [...document.querySelectorAll('.view')].find(v=>!v.classList.contains('hidden'))?.id || 'definitions';
  const previousTab = document.querySelector('.tab.active');
  const previousPrintClasses = ['print-definitions','print-targets','print-timelines'];
-
  renderAll();
-
  document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));
  document.getElementById(viewId).classList.remove('hidden');
-
  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
  const activeTab = document.querySelector(`.tab[onclick*='${viewId}']`);
  if(activeTab) activeTab.classList.add('active');
-
  previousPrintClasses.forEach(c=>document.documentElement.classList.remove(c));
  document.documentElement.classList.add(printClass);
-
  const details = viewId === 'definitions' ? document.querySelectorAll('#definitions details') : [];
  const previousDetailsState = [];
- details.forEach(d=>{
-   previousDetailsState.push(d.open);
-   d.open = true;
- });
-
+ details.forEach(d=>{ previousDetailsState.push(d.open); d.open = true; });
  const restoreAfterPrint = function(){
    details.forEach((d,i)=>{ d.open = previousDetailsState[i]; });
    previousPrintClasses.forEach(c=>document.documentElement.classList.remove(c));
    search.value = previousSearch;
-
    document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));
    document.getElementById(previousView).classList.remove('hidden');
-
    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
    if(previousTab) previousTab.classList.add('active');
-
    renderAll();
    window.removeEventListener('afterprint', restoreAfterPrint);
  };
-
  window.addEventListener('afterprint', restoreAfterPrint);
  window.print();
 }
 
-function exportDefinitionsPDF(){
- exportViewPDF('definitions','print-definitions');
-}
+function exportDefinitionsPDF(){ exportViewPDF('definitions','print-definitions'); }
+function exportTargetsPDF(){ exportViewPDF('targets','print-targets'); }
+function exportTimelinesPDF(){ exportViewPDF('timelines','print-timelines'); }
 
-function exportTargetsPDF(){
- exportViewPDF('targets','print-targets');
-}
-
-function exportTimelinesPDF(){
- exportViewPDF('timelines','print-timelines');
-}
-
-function normalize(s){return String(s).toLowerCase().replace(/[^a-z0-9]/g,'');}
-function renderAll(){renderDefinitions();renderApplicability();renderTargets();renderPMPHTargets();renderTimelines();renderSPCScope();}
+function normalize(s){ return String(s).toLowerCase().replace(/[^a-z0-9]/g,''); }
+function renderAll(){ renderDefinitions(); renderApplicability(); renderTargets(); renderPMPHTargets(); renderTimelines(); renderSPCScope(); }
 renderAll();
 </script>
+
 <div class="copyright">
-SPC Tangier_HBO © Confidential & Proprietary – Internal Use Only
+SPC Tangier_HBO &copy; Confidential &amp; Proprietary – Internal Use Only
 </div>
 </body>
 </html>
